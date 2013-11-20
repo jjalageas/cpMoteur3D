@@ -1,0 +1,36 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>images/dualscreen.png</file>
+        <file>images/exit.png</file>
+        <file>images/open.png</file>
+        <file>images/save.png</file>
+        <file>images/skins.png</file>
+        <file>images/language.png</file>
+        <file>images/pen.png</file>
+        <file alias="test">images/eraser.png</file>
+        <file>images/bucket.png</file>
+        <file>images/france.png</file>
+        <file>images/spain.png</file>
+        <file>images/usa.png</file>
+        <file>stylesheets/global.qss</file>
+        <file>stylesheets/windows8.qss</file>
+        <file>translations/coral_es.qm</file>
+        <file>translations/coral_fr.qm</file>
+    </qresource>
+    <qresource prefix="/test">
+        <file>pictures/lena.jpg</file>
+        <file>pictures/lion.jpg</file>
+    </qresource>
+	<qresource prefix="/qml">
+        <file>example.qml</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>arrow.png</file>
+        <file>circle.png</file>
+        <file>GrassandSky.png</file>
+        <file>minus.png</file>
+        <file>move.gif</file>
+        <file>plus.png</file>
+        <file>qt-logo.png</file>
+    </qresource>
+</RCC>
