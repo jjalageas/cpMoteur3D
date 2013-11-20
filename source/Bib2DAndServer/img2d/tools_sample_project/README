@@ -1,0 +1,52 @@
+This project aims to show how the C++ standard developpment libraries should be used
+and how a C++ project should be set up.
+
+
+----- COMPILATION -----
+
+- Dependencies 
+
+This project depends on Qt, CppUnit and Doxygen.
+You will need QMake to build the project.
+CppUnit and Doxygen are optionnal.
+
+List of the packages to install on ubuntu :
+qt4-qmake qt-sdk libcppunit-dev
+
+- Build the program
+
+You can build this program using one or various configurations :
+DebugConfig   (not compatible with ReleaseConfig)
+ReleaseConfig (not compatible with DebugConfig)
+UnitTestConfig
+ContinuousIntegrationConfig (it permits to generate XML files for tests)
+GenerateDoc : Generate a Doxygen documentation in ./doc
+
+1) Command line method
+
+Type in a terminal : 
+qmake tools_sample_project.pro CONFIG+=MY_CONFIG1_HERE CONFIG+=MY_CONFIG2_HERE
+make -j8
+
+
+2) Graphical method
+
+With this method, you can choose where you put the object files and binaries.
+
+Install qtcreator, then open tools_sample_project.pro.
+Goto project, validate the current configuration, then goto
+Compilation parameters ->
+Compilation steps -> 
+qmake : details
+Extra arguments : CONFIG+=MY_CONFIG1_HERE CONFIG+=MY_CONFIG2_HERE
+
+Compile menu : Execute qmake
+Compile menu : Rebuild All
+
+
+
+
+//sudo apt-get install libqxcppunit-dev # qt quick graphical test runner for cppUnit
+
+
+
