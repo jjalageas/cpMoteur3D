@@ -212,6 +212,39 @@ public:
         }
     }
 
+    int getNbPoint(char value)
+    {
+    int size = getGlobalSize();
+    int res=0;
+    for(int i=0;i<size;++i)
+    if(get(i)==value)
+    res++;
+    return res;
+    }
+    Point3D_t<int>* getPointFrom1DIndex(int index)
+    {
+    int wh=getWidth()*getHeight();
+    int z=index/(wh);
+    int y=(index-(z*wh))/getWidth();
+    int x=(index-(z*wh))%getHeight();
+    return new Point3D_t<int>(x,y,z);
+    }
+
+    int getGlobalIndex(Point3D_t<int> *p){ return (p->z * getWidth()* getHeight()+ p->y * getWidth() + p->x); }
+
+    MiList<int>*
+    TransformMapIntoListIndex1D(bool value)
+    {
+    MiList<int>* res=new MiList<int>;
+    int size=getGlobalSize();
+    for (int i = 0; i < size; ++i){
+    if(get(i)==value){
+    res->add(i);
+    }
+    }
+    return res;
+    }
+
 private:
     /**
       Refreshes the min and max value if these values are outdated.
@@ -338,6 +371,8 @@ private:
                 y>=0 && y<_height &&
                 z>=0 && z<_depth);
     }
+
+
 
 
 private:

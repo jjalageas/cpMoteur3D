@@ -9,7 +9,7 @@
 #include <QDesktopWidget>
 
 #include "mainwindow.hpp"
-#include "imageviewer.hpp"
+#include "modules/imageviewer/imageviewer.hpp"
 #include "exampleapp.h"
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)

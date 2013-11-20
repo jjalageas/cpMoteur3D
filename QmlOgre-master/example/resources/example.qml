@@ -9,7 +9,7 @@
 
 import QtQuick 2.0
 import Ogre 1.0
-import Example 1.0
+//import Example 1.0
 
 Rectangle {
     id: ogre
@@ -17,20 +17,7 @@ Rectangle {
     height: 768
     color: "white"
 
-    Camera {
-        id: cam1
-    }
 
-    Camera {
-        id: cam2
-    }
-    Camera {
-        id: cam3
-    }
-
-    Camera {
-        id: cam4
-    }
 
     Grid
     {
@@ -41,7 +28,7 @@ Rectangle {
         OgreItem {
             id: ogreitem4
             width: ogre.width/2; height: ogre.height/2
-            camera: cam4
+            camera: camera4
             ogreEngine: OgreEngine
 
             Behavior on opacity { NumberAnimation { } }
@@ -90,7 +77,7 @@ Rectangle {
         OgreItem {
             id: ogreitem3
             width: ogre.width/2; height: ogre.height/2
-            camera: cam3
+            camera: camera3
             ogreEngine: OgreEngine
 
             Behavior on opacity { NumberAnimation { } }
@@ -139,7 +126,7 @@ Rectangle {
         OgreItem {
             id: ogreitem2
             width: ogre.width/2; height: ogre.height/2
-            camera: cam2
+            camera: camera2
             ogreEngine: OgreEngine
 
             Behavior on opacity { NumberAnimation { } }
@@ -188,7 +175,7 @@ Rectangle {
         OgreItem {
             id: ogreitem
             width: ogre.width/2; height: ogre.height/2
-            camera: cam1
+            camera: camera1
             ogreEngine: OgreEngine
 
             Behavior on opacity { NumberAnimation { } }

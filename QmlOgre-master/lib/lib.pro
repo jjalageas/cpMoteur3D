@@ -60,13 +60,17 @@ MOC_DIR = ./.moc
 SOURCES += ogreitem.cpp \
     ogrenode.cpp \
     ogrecamerawrapper.cpp \
-    ogreengine.cpp
+    ogreengine.cpp \
+    tetgen.cxx \
+    predicates.cxx
 
 HEADERS += \
     ogreitem.h \
     ogrenode.h \
     ogrecamerawrapper.h \
-    ogreengine.h
+    ogreengine.h \
+    tetgen.h \
+    mesh.hpp
 
 # Copy all headers to build folder
 Headers.path = $$OUT_PWD/include

@@ -4,7 +4,7 @@ QT += qml quick \
 TEMPLATE = app
 TARGET = qmlogre
 
-LIBS += -L../lib/debug/ -lqmlogre
+LIBS += -lqmlogre -L../lib/
 
 UI_DIR = ./.ui
 OBJECTS_DIR = ./.obj
@@ -17,10 +17,11 @@ SOURCES += main.cpp \
     coral.cpp
 
 HEADERS += DebugDrawer.h \
-cameranodeobject.h \
+    cameranodeobject.h \
     exampleapp.h \
     coral.h
 
+OTHER_FILES += resources/example.qml
 
 macx {
     OGREDIR = $$(OGRE_HOME)

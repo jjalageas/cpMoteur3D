@@ -17,6 +17,12 @@
 #include <SliceType.h>
 #include <QtQuick/QQuickView>
 #include <DebugDrawer.h>
+#include <cameranodeobject.h>
+
+#include "../example/cameranodeobject.h"
+#include "../lib/ogreitem.h"
+#include "../lib/ogreengine.h"
+#include "../lib/mesh.hpp"
 
 class ExampleApp : public QQuickView
 {
@@ -32,10 +38,10 @@ public slots:
 
     Examen* tmpLoadData(std::string filename);
 
-    void initializeModel(Examen* exam);
+    void initializeModel(Examen* exam, std::string name);
     void initializeOgre();
 
-    void initializeMask(std::string name,Mask3d* mask);
+    void initializeMask(std::string name,Mask3d* mask, std::string managerName);
     void initializeSkeleton(std::string ,Skeleton* );
     void DrawBoundingBox(Ogre::SceneNode*parent,std::string ,Volume* );
 
@@ -49,11 +55,23 @@ void DrawMultiCube();
 void DrawMultiIcoSphere();
     void addContent();
 
-private:
-    OgreEngine *m_ogreEngine;
-    Image<float>* Coronal;
+    void DrawMask_3DScene(Ogre::SceneNode*parent,std::string name,Mask3d* mask);
 
+    void DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh);
+
+    void Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask);
+
+private:
+
+    OgreEngine *m_ogreEngine;
+    CameraNodeObject *m_cameraObject;
+    CameraNodeObject *m_cameraObject2;
+    CameraNodeObject *m_cameraObject3;
+    CameraNodeObject *m_cameraObject4;
     Ogre::SceneManager *m_sceneManager;
+    Ogre::SceneManager *m_sceneManager2;
+    Ogre::SceneManager *m_sceneManager3;
+    Ogre::SceneManager *m_sceneManager4;
     Ogre::Root *m_root;
 };
 

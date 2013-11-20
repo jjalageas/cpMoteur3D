@@ -8,14 +8,13 @@
  */
 
 #include "exampleapp.h"
-#include "cameranodeobject.h"
-#include "../lib/ogreitem.h"
-#include "../lib/ogreengine.h"
 
 #include <QCoreApplication>
 #include <QtQml/QQmlContext>
 #include <QDir>
 #include <QDebug>
+
+#include "../lib/tetgen.h"
 
 static QString appPath()
 {
@@ -33,11 +32,18 @@ static QString appPath()
 
 ExampleApp::ExampleApp(QWindow *parent) :
     QQuickView(parent)
+  , m_cameraObject(0)
+  , m_cameraObject2(0)
+  , m_cameraObject3(0)
+  , m_cameraObject4(0)
   , m_ogreEngine(0)
   , m_sceneManager(0)
+  , m_sceneManager2(0)
+  , m_sceneManager3(0)
+  , m_sceneManager4(0)
   , m_root(0)
 {
-    qmlRegisterType<CameraNodeObject>("Example", 1, 0, "Camera");
+  //  qmlRegisterType<CameraNodeObject>("Example", 1, 0, "Camera");
 
     // start Ogre once we are in the rendering thread (Ogre must live in the rendering thread)
     connect(this, &ExampleApp::beforeRendering, this, &ExampleApp::initializeOgre, Qt::DirectConnection);
@@ -61,9 +67,9 @@ Examen* ExampleApp::tmpLoadData(std::string filename)
 
 
 
-void ExampleApp::initializeModel(Examen* exam)
+void ExampleApp::initializeModel(Examen* exam, std::string name)
 {
-    Ogre::SceneNode* NodeRoot = m_sceneManager->getRootSceneNode();
+    Ogre::SceneNode* NodeRoot = Ogre::Root::getSingleton().getSceneManager(name)->getRootSceneNode();
 
     Volume* data=exam->getImage();
 
@@ -79,7 +85,7 @@ void ExampleApp::initializeModel(Examen* exam)
     Mask3d* mask=exam->getMask();
 
     //dessine le nuage de point
-    initializeMask("mask", mask);
+    initializeMask("mask", mask, name);
 }
 
 void ExampleApp::DrawLine(Ogre::SceneNode*parent,const Ogre::Vector3& start, const Ogre::Vector3& stop, const Ogre::ColourValue& col)
@@ -200,8 +206,8 @@ void ExampleApp::DrawBoundingBox(Ogre::SceneNode*parent,std::string ,Volume* dat
     //--------------------------------------
     //définit nos images de coupes
     //--------------------------------------
-    Coronal=data->getSlice(midw,CORONAL);
-    //Image<float>* Coronal=data->getSlice(midw,CORONAL);
+    //Coronal=data->getSlice(midw,CORONAL);
+    Image<float>* Coronal=data->getSlice(midw,CORONAL);
     std::cout<<"ok"<<std::endl;
     Image<float>* Frontal=data->getSlice(midh,FRONTAL);
     std::cout<<"ok"<<std::endl;
@@ -233,13 +239,10 @@ void ExampleApp::DrawBoundingBox(Ogre::SceneNode*parent,std::string ,Volume* dat
 
 
 
-void ExampleApp::initializeMask(std::string name,Mask3d* mask)
+void ExampleApp::initializeMask(std::string name,Mask3d* mask,std::string managerName)
 {
-
-
-
-
-    Ogre::ManualObject* m_ManualObject=m_sceneManager->createManualObject(name);
+    Ogre::SceneManager* sceneManager = Ogre::Root::getSingleton().getSceneManager(managerName);
+    Ogre::ManualObject* m_ManualObject=sceneManager->createManualObject(name);
     int width=mask->getWidth();
     int height=mask->getHeight();
     int depth=mask->getDepth();
@@ -261,11 +264,7 @@ void ExampleApp::initializeMask(std::string name,Mask3d* mask)
 
     }
     m_ManualObject->end();
-    m_sceneManager->getRootSceneNode()->createChildSceneNode()->attachObject(m_ManualObject);
-
-
-
-
+    sceneManager->getRootSceneNode()->createChildSceneNode()->attachObject(m_ManualObject);
 }
 
 
@@ -325,23 +324,75 @@ void ExampleApp::initializeOgre()
     m_root = m_ogreEngine->startEngine();
     m_ogreEngine->setupResources();
 
-    // set up Ogre scene
-    m_sceneManager = m_root->createSceneManager(Ogre::ST_GENERIC, "mySceneManager");
-    m_sceneManager->createLight("myLight")->setPosition(20, 80, 50);
+    // set up Ogre scene 1
+    std::string name = "scene";
+    m_sceneManager = m_root->createSceneManager(Ogre::ST_GENERIC, name);
+    Ogre::Camera *camera1 = m_sceneManager->createCamera("myCamera2");
+    camera1->setNearClipDistance(1);
+    camera1->setFarClipDistance(99999);
+    camera1->setAspectRatio(1);
+    camera1->setAutoTracking(true, m_sceneManager->getRootSceneNode());
+    m_sceneManager->setAmbientLight(Ogre::ColourValue(0.3, 0.3, 0.3));
+    //TODO : Non fonctionnel, suite à un bug encore inconnu
+    //m_sceneManager2->setSkyBox(true, "SpaceSkyBox", 10000);
     m_ogreEngine->activateOgreContext();
+    m_cameraObject = new CameraNodeObject(name,camera1);
 
-    std::string file_out="test.bmi3d";
+    // set up Ogre scene 2
+    std::string name2 = "scene2";
+    m_sceneManager2 = m_root->createSceneManager(Ogre::ST_GENERIC, name2);
+    Ogre::Camera *camera2 = m_sceneManager2->createCamera("myCamera2");
+    camera2->setNearClipDistance(1);
+    camera2->setFarClipDistance(99999);
+    camera2->setAspectRatio(1);
+    camera2->setAutoTracking(true, m_sceneManager2->getRootSceneNode());
+    m_sceneManager2->setAmbientLight(Ogre::ColourValue(0.3, 0.3, 0.3));
+    //m_sceneManager2->setSkyBox(true, "SpaceSkyBox", 10000);
+    m_ogreEngine->activateOgreContext();
+    m_cameraObject2 = new CameraNodeObject(name2,camera2);
+
+
+    // set up Ogre scene 3
+    std::string name3 = "scene3";
+    m_sceneManager3 = m_root->createSceneManager(Ogre::ST_GENERIC, name3);
+    Ogre::Camera *camera3 = m_sceneManager3->createCamera("myCamera3");
+    camera3->setNearClipDistance(1);
+    camera3->setFarClipDistance(99999);
+    camera3->setAspectRatio(1);
+    camera3->setAutoTracking(true, m_sceneManager3->getRootSceneNode());
+    m_sceneManager3->setAmbientLight(Ogre::ColourValue(0.3, 0.3, 0.3));
+    //m_sceneManager3->setSkyBox(true, "SpaceSkyBox", 10000);
+    m_ogreEngine->activateOgreContext();
+    m_cameraObject3 = new CameraNodeObject(name3,camera3);
+
+    // set up Ogre scene 4
+    std::string name4 = "scene4";
+    m_sceneManager4 = m_root->createSceneManager(Ogre::ST_GENERIC, name4);
+    Ogre::Camera *camera4 = m_sceneManager4->createCamera("myCamera4");
+    camera3->setNearClipDistance(1);
+    camera3->setFarClipDistance(99999);
+    camera3->setAspectRatio(1);
+    camera3->setAutoTracking(true, m_sceneManager4->getRootSceneNode());
+    m_sceneManager4->setAmbientLight(Ogre::ColourValue(0.3, 0.3, 0.3));
+    //m_sceneManager4->setSkyBox(true, "SpaceSkyBox", 10000);
+    m_ogreEngine->activateOgreContext();
+    m_cameraObject4 = new CameraNodeObject(name4,camera4);
+
+    std::string file_out="resources/test.bmi3d";
     Examen* exam=tmpLoadData( file_out);
 
 
     // Initialise the DebugDrawer singleton
     new DebugDrawer(m_sceneManager, 0.5f);
 
-    initializeModel(exam);
+    initializeModel(exam,name);
+    initializeModel(exam,name2);
+    initializeModel(exam,name3);
+    initializeModel(exam,name4);
 
     // Let's draw the bounding box for the ogre head!
     DebugDrawer::getSingleton().build();
-    m_sceneManager->setSkyBox(true, "SoftBackGround", 10000);
+    //m_sceneManager->setSkyBox(true, "SoftBackGround", 10000);
 
     m_ogreEngine->doneOgreContext();
     emit(ogreInitialized());
@@ -353,8 +404,295 @@ void ExampleApp::addContent()
     // expose objects as QML globals
     rootContext()->setContextProperty("Window", this);
     rootContext()->setContextProperty("OgreEngine", m_ogreEngine);
-
+    rootContext()->setContextProperty("camera1",m_cameraObject);
+    rootContext()->setContextProperty("camera2",m_cameraObject2);
+    rootContext()->setContextProperty("camera3",m_cameraObject3);
+    rootContext()->setContextProperty("camera4",m_cameraObject4);
     // load the QML scene
     setResizeMode(QQuickView::SizeRootObjectToView);
     setSource(QUrl("qrc:/qml/example.qml"));
+}
+
+
+
+
+void ExampleApp::DrawMask_3DScene(Ogre::SceneNode*parent,std::string name,Mask3d* mask){
+
+Ogre::SceneNode* NodeMask = parent->createChildSceneNode();
+Ogre::ManualObject* m_ManualObject=m_sceneManager->createManualObject(name);
+int width=mask->getWidth();
+int height=mask->getHeight();
+int depth=mask->getDepth();
+m_ManualObject->setDynamic(true);
+m_ManualObject->begin("BaseWhiteNoLighting",Ogre::RenderOperation::OT_POINT_LIST);
+
+for(int k=0;k<depth;++k){
+for(int j=0;j<height;++j){
+for(int i=0;i<width;++i){
+if(mask->get(i, j, k)){
+//std::cout<<"position ("<<i<<","<<j<<","<<k<<")="<<mask->get(i, j, k)<<std::endl;
+m_ManualObject->position(i, j, k);
+// m_ManualObject->normal(nx, ny, nz);
+m_ManualObject->colour(Ogre::ColourValue(0.5f, 0.0f, 0.0f, 1.0f));
+}
+}
+}
+
+}
+m_ManualObject->end();
+NodeMask->attachObject(m_ManualObject);
+
+}
+
+
+void ExampleApp::DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh){
+
+/// Create the mesh via the MeshManager
+Ogre::MeshPtr msh = Ogre::MeshManager::getSingleton().createManual("ColourCube", "General");
+
+/// Create one submesh
+Ogre::SubMesh* sub = msh->createSubMesh();
+
+/// Define the vertices (8 vertices, each consisting of 2 groups of 3 floats
+const size_t nVertices = mesh->getNbVertice();
+const size_t vbufCount = 3*2*nVertices;
+float vertices[vbufCount];
+int indexVBuf=0;
+int indexVertice=0;
+int indexNormale=0;
+int indexColor=0;
+Ogre::RenderSystem* rs = Ogre::Root::getSingleton().getRenderSystem();
+Ogre::RGBA colours[nVertices];
+Ogre::RGBA *pColour = colours;
+
+for(int i=0;i<mesh->getNbVertice();++i){
+
+//vertice
+vertices[indexVBuf]=mesh->getVerticeValue(indexVertice);indexVBuf++;indexVertice++;
+vertices[indexVBuf]=mesh->getVerticeValue(indexVertice);indexVBuf++;indexVertice++;
+vertices[indexVBuf]=mesh->getVerticeValue(indexVertice);indexVBuf++;indexVertice++;
+
+//normal
+vertices[indexVBuf]=mesh->getNormaleValue(indexNormale);indexVBuf++;indexNormale++;
+vertices[indexVBuf]=mesh->getNormaleValue(indexNormale);indexVBuf++;indexNormale++;
+vertices[indexVBuf]=mesh->getNormaleValue(indexNormale);indexVBuf++;indexNormale++;
+
+//colour (Use render system to convert colour value since colour packing varies)
+if(mesh->getColorRef()!=NULL){
+float r=mesh->getColorValue(indexColor);indexColor++;
+float g=mesh->getColorValue(indexColor);indexColor++;
+float b=mesh->getColorValue(indexColor);indexColor++;
+rs->convertColourValue(Ogre::ColourValue(r,g,b), pColour++);
+}else{
+rs->convertColourValue(Ogre::ColourValue(1,0.4,0.), pColour++);
+}
+
+}
+
+/// Define 12 triangles (two triangles per cube face)
+/// The values in this table refer to vertices in the above table
+const size_t ibufCount = mesh->getSizeFace();
+
+unsigned short faces[ibufCount];
+int indexFace=0;
+for(int i=0;i<mesh->getNbFace();++i){
+//définit 1 triangle
+faces[indexFace]=mesh->getFaceIndex(indexFace);indexFace++;
+faces[indexFace]=mesh->getFaceIndex(indexFace);indexFace++;
+faces[indexFace]=mesh->getFaceIndex(indexFace);indexFace++;
+}
+
+/// Create vertex data structure for 8 vertices shared between submeshes
+msh->sharedVertexData = new Ogre::VertexData();
+msh->sharedVertexData->vertexCount = nVertices;
+
+/// Create declaration (memory format) of vertex data
+Ogre::VertexDeclaration* decl = msh->sharedVertexData->vertexDeclaration;
+size_t offset = 0;
+// 1st buffer
+decl->addElement(0, offset, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
+offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+decl->addElement(0, offset, Ogre::VET_FLOAT3, Ogre::VES_NORMAL);
+offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+/// Allocate vertex buffer of the requested number of vertices (vertexCount)
+/// and bytes per vertex (offset)
+Ogre::HardwareVertexBufferSharedPtr vbuf =
+Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+offset, msh->sharedVertexData->vertexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+/// Upload the vertex data to the card
+vbuf->writeData(0, vbuf->getSizeInBytes(), vertices, true);
+
+/// Set vertex buffer binding so buffer 0 is bound to our vertex buffer
+Ogre::VertexBufferBinding* bind = msh->sharedVertexData->vertexBufferBinding;
+bind->setBinding(0, vbuf);
+
+// 2nd buffer
+offset = 0;
+decl->addElement(1, offset, Ogre::VET_COLOUR, Ogre::VES_DIFFUSE);
+offset += Ogre::VertexElement::getTypeSize(Ogre::VET_COLOUR);
+/// Allocate vertex buffer of the requested number of vertices (vertexCount)
+/// and bytes per vertex (offset)
+vbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+offset, msh->sharedVertexData->vertexCount, Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+/// Upload the vertex data to the card
+vbuf->writeData(0, vbuf->getSizeInBytes(), colours, true);
+
+/// Set vertex buffer binding so buffer 1 is bound to our colour buffer
+bind->setBinding(1, vbuf);
+
+/// Allocate index buffer of the requested number of vertices (ibufCount)
+Ogre::HardwareIndexBufferSharedPtr ibuf = Ogre::HardwareBufferManager::getSingleton().
+createIndexBuffer(
+Ogre::HardwareIndexBuffer::IT_16BIT,
+ibufCount,
+Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+
+/// Upload the index data to the card
+ibuf->writeData(0, ibuf->getSizeInBytes(), faces, true);
+
+/// Set parameters of the submesh
+sub->useSharedVertices = true;
+sub->indexData->indexBuffer = ibuf;
+sub->indexData->indexCount = ibufCount;
+sub->indexData->indexStart = 0;
+
+/// Set bounding information (for culling)
+msh->_setBounds(Ogre::AxisAlignedBox(-100,-100,-100,100,100,100));
+msh->_setBoundingSphereRadius(Ogre::Math::Sqrt(3*100*100));
+
+/// Notify -Mesh object that it has been loaded
+msh->load();
+
+Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
+"Test/ColourTest", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+material->getTechnique(0)->getPass(0)->setVertexColourTracking(Ogre::TVC_AMBIENT);
+
+Ogre::Entity* thisEntity = m_sceneManager->createEntity("cc", "ColourCube");
+thisEntity->setMaterialName("Test/ColourTest");
+Ogre::SceneNode* thisSceneNode = parent->createChildSceneNode();
+thisSceneNode->setPosition(-35, 0, 0);
+thisSceneNode->attachObject(thisEntity);
+}
+
+Point3D_t<float>* produitVec(Point3D_t<float>*A,Point3D_t<float>*B,Point3D_t<float>*C)
+{
+Point3D_t<float> vecAB(B->x-A->x,B->y-A->y,B->z-A->z);
+Point3D_t<float> vecBC(C->x-B->x,C->y-B->y,C->z-B->z);
+Point3D_t<float>* ProdVect=new Point3D_t<float> (vecAB.y*vecBC.z-vecAB.z*vecBC.y,
+vecAB.z*vecBC.x-vecAB.x*vecBC.z,
+vecAB.x*vecBC.y-vecAB.y*vecBC.x);
+
+return ProdVect;
+}
+
+
+void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask){
+
+Mesh* mesh=new Mesh(mask);
+
+//calcul de Delaunay
+tetgenio in, out;
+int i;
+
+MiTimer* t2=new MiTimer();
+t2->start();
+// All indices start from 1.
+in.firstnumber = 1;
+
+in.numberofpoints = mesh->getNbVertice();
+
+int sizeTabVertice=mesh->getNbVertice()*3;
+cout<<"numberofpoints:"<<mesh->getNbVertice() <<" sizeTab: "<< sizeTabVertice<<endl;
+in.pointlist = new REAL[sizeTabVertice];
+for(int i=0;i<sizeTabVertice;++i)
+{
+// creation d'un noeux.
+in.pointlist[i] = mesh->getVerticeValue(i);
+}
+
+t2->stop("chargement point dans model tetgen: ");
+cout<<"start tetrahedralize"<<endl;
+tetgenbehavior b;
+//char *switches="pq1.414a0.1";
+char *switches="w";
+if (!b.parse_commandline(switches)) {
+terminatetetgen(1);
+}
+
+MiTimer* t3=new MiTimer();
+t3->start();
+tetrahedralize(&b, &in, &out);
+t3->stop("tetrahedralize: ");
+
+cout<<"numberoftetrahedra:"<< out.numberoftetrahedra<<" numberofcorners:"<< out.numberofcorners<<" numberoftetrahedronattributes:"<<out.numberoftetrahedronattributes<<endl;
+for (int i = 0; i < 3; i++) {
+cout<<"indexs["<<i + out.firstnumber<<"]=";
+for (int j = 0; j < out.numberofcorners; j++) {
+cout<<" indice Corner"<<out.tetrahedronlist[i * out.numberofcorners + j]<<","<<endl;
+int indiceVertex=out.tetrahedronlist[i * out.numberofcorners + j];
+for (int j = 0; j < 3; j++) {
+cout<<" Composante point "<< out.pointlist[indiceVertex+j]<<",";
+}
+cout<<endl;
+}
+
+cout<<endl;
+}
+
+cout<<"numberoffacetconstraints "<<out.numberoffacetconstraints<<endl;
+cout<<"numberoftrifaces "<<out.numberoftrifaces<<endl;
+cout<<"numberofvedges "<<out.numberofvedges<<endl;
+cout<<"numberofvfacets "<<out.numberofvfacets<<endl;
+cout<<"numberofcorners "<<out.numberofcorners<<endl;
+cout<<"numberofedges "<<out.numberofedges<<endl;
+cout<<"numberoffacets "<<out.numberoffacets<<endl;
+cout<<"numberofholes "<<out.numberofholes<<endl;
+cout<<"numberofpbcgroups "<<out.numberofpbcgroups<<endl;
+cout<<"numberofpointattributes "<<out.numberofpointattributes<<endl;
+cout<<"numberofpointmtrs "<<out.numberofpointmtrs<<endl;
+// cout<<"numberofpointpairs "<<out.numberofpointpairs<<endl;
+cout<<"numberofpoints "<<out.numberofpoints<<endl;
+cout<<"numberofregions "<<out.numberofregions<<endl;
+cout<<"numberofsegmentconstraints "<<out.numberofsegmentconstraints<<endl;
+cout<<"numberoftetrahedronattributes "<<out.numberoftetrahedronattributes<<endl;
+cout<<"numberoftrifaces "<<out.numberoftrifaces<<endl;
+cout<<"numberoffvcells"<<out.numberofvcells<<endl;
+cout<<"numberofvpoints "<<out.numberofvpoints<<endl;
+
+cout<<"numberoftrifaces: "<< out.numberoftrifaces<<endl;
+mesh->createTabFace(out.numberoftrifaces);
+/*for (i = 0; i < out.numberoftrifaces; i++) {
+cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
+
+mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+
+Point3D_t<float>*A=new Point3D_t<float>(0.5 , 0 , 1);
+Point3D_t<float>*B=new Point3D_t<float>( 0.8 , 0.8 , 1);
+Point3D_t<float>*C=new Point3D_t<float>( -0.2 , 0.8 , 1);
+Point3D_t<float>* pv=produitVec(A,B,C);
+
+}*/
+
+/*int numberOfFacet=out.numberoffacets;
+cout<<"numberOfFacet"<<numberOfFacet<<endl;
+for(int i=0;i<numberOfFacet;i++){
+
+tetgenio::facet f=out.facetlist[i];
+int numberOfPolygon=f.numberofpolygons;
+cout<<"facet["<<i<<"]="<<numberOfPolygon<<endl;
+for(int j=0;j<numberOfPolygon;j++){
+tetgenio::polygon polygon=f.polygonlist[j];
+int numberVertice=polygon.numberofvertices;
+cout<<" polygon["<<j<<"]="<<numberVertice<<endl;
+for(int k=0;k<numberVertice;k++){
+int indexVertice=polygon.vertexlist[k];
+
+}
+}
+
+}*/
+
+// DrawMesh_3DScene(parent,"mesh", mesh);
 }

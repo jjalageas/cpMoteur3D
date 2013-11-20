@@ -9,15 +9,15 @@
 
 #include "cameranodeobject.h"
 
-#include "OgreRoot.h"
-#include "OgreSceneNode.h"
-#include "OgreCamera.h"
+#include <OGRE/OgreRoot.h>
+#include <OGRE/OgreSceneNode.h>
+#include <OGRE/OgreCamera.h>
 
 #include <QDebug>
 
 static const Ogre::Vector3 initialPosition(0, 0, 300);
 
-CameraNodeObject::CameraNodeObject(QObject *parent) :
+CameraNodeObject::CameraNodeObject(std::string name,Ogre::Camera *cam,QObject *parent) :
     QObject(parent),
     OgreCameraWrapper(),
     m_camera(0),
@@ -25,7 +25,11 @@ CameraNodeObject::CameraNodeObject(QObject *parent) :
     m_pitch(0),
     m_zoom(1)
 {
-    Ogre::SceneManager *sceneManager = Ogre::Root::getSingleton().getSceneManager("mySceneManager");
+    m_camera = cam;
+    m_node=Ogre::Root::getSingleton().getSceneManager(name)->getRootSceneNode()->createChildSceneNode();
+    m_node->attachObject(cam);
+    cam->move(initialPosition);
+    /*Ogre::SceneManager *sceneManager = Ogre::Root::getSingleton().getSceneManager("mySceneManager");
 
     // let's use the current memory address to create a unique name
     QString instanceName;
@@ -40,7 +44,7 @@ CameraNodeObject::CameraNodeObject(QObject *parent) :
     m_camera = camera;
     m_node = sceneManager->getRootSceneNode()->createChildSceneNode();
     m_node->attachObject(camera);
-    camera->move(initialPosition);
+    camera->move(initialPosition);*/
 }
 
 void CameraNodeObject::updateRotation()

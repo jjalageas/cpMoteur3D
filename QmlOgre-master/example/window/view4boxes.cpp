@@ -1,6 +1,6 @@
 #include "view4boxes.hpp"
 #include "coral.hpp"
-#include "imageviewer.hpp"
+#include "modules/imageviewer/imageviewer.hpp"
 
 
 #include <QTextEdit>
