@@ -8,6 +8,8 @@
  */
 
 #include "exampleapp.h"
+#include "Vector3d.h"
+#include "Struct.hpp"
 
 #include <QCoreApplication>
 #include <QtQml/QQmlContext>
@@ -15,6 +17,21 @@
 #include <QDebug>
 #include "../lib/mesh.hpp"
 #include "../lib/tetgen.h"
+
+
+Vector3d& normal(struct::Point3D_t<float> p1, struct::Point3D_t<float> p2, struct::Point3D_t<float> p3 ){
+
+    Vector3d u(p2.x - p1.x, p2.y - p1.y ,p2.z - p1.z);
+    Vector3d v(p3.x - p1.x, p3.y - p1.y ,p3.z - p1.z);
+
+    Vector3d normal(0,0,0);
+
+    normal.cross(u, v);
+    normal.normalize();
+
+    return normal;
+}
+
 
 static QString appPath()
 {
@@ -43,7 +60,7 @@ ExampleApp::ExampleApp(QWindow *parent) :
   , m_sceneManager4(0)
   , m_root(0)
 {
-  //  qmlRegisterType<CameraNodeObject>("Example", 1, 0, "Camera");
+    //  qmlRegisterType<CameraNodeObject>("Example", 1, 0, "Camera");
 
     // start Ogre once we are in the rendering thread (Ogre must live in the rendering thread)
     connect(this, &ExampleApp::beforeRendering, this, &ExampleApp::initializeOgre, Qt::DirectConnection);
@@ -85,10 +102,43 @@ void ExampleApp::initializeModel(Examen* exam, std::string name)
     Mask3d* mask=exam->getMask();
 
     //dessine le nuage de point
-    initializeMask("mask", mask, name);
-   // DrawMask_3DScene(NodeRoot,name, mask);
-   // Delaunay_it(NodeRoot, name, mask);
-   // DrawMesh_3DScene(NodeRoot, name, new Mesh(mask));
+   // initializeMask("mask", mask, name);
+     //
+    DrawMask_3DScene(NodeRoot,name, mask);
+     Delaunay_it(NodeRoot, name, mask);
+    // DrawMesh_3DScene(NodeRoot, name, new Mesh(mask));
+}
+
+
+void ExampleApp::initializeMesh()
+{
+
+    std::string file_out="../resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d";
+    Examen* exam=tmpLoadData( file_out);
+
+    std::string name = "scene";
+
+    Ogre::SceneNode* NodeRoot = Ogre::Root::getSingleton().getSceneManager(name)->getRootSceneNode();
+
+    Volume* data=exam->getImage();
+
+    //récupère les coupes et crée la boundingbox
+    DrawBoundingBox(NodeRoot,"boundingBox", data );
+
+    //récupère le skeleton
+    //Skeleton* skel=examAfter->getSkeleton();
+    //initializeSkeleton("skeleton" ,skel);
+
+
+    //récupère le mask 3D (nuage de point)
+    Mask3d* mask=exam->getMask();
+
+    //dessine le nuage de point
+    // initializeMask("mask", mask, name);
+    // DrawMask_3DScene(NodeRoot,name, mask);
+
+    Delaunay_it(NodeRoot, name, mask);
+    // DrawMesh_3DScene(NodeRoot, name, new Mesh(mask));
 }
 
 void ExampleApp::DrawLine(Ogre::SceneNode*parent,const Ogre::Vector3& start, const Ogre::Vector3& stop, const Ogre::ColourValue& col)
@@ -561,42 +611,63 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
     cout<<"numberoftrifaces: "<< out.numberoftrifaces<<endl;
     mesh->createTabFace(out.numberoftrifaces);
 
-}
-    /*for (i = 0; i < out.numberoftrifaces; i++) {
-cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
 
-mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
-mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
-mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+    for (i = 0; i < out.numberoftrifaces; i++) {
+        cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
 
-Point3D_t<float>*A=new Point3D_t<float>(0.5 , 0 , 1);
-Point3D_t<float>*B=new Point3D_t<float>( 0.8 , 0.8 , 1);
-Point3D_t<float>*C=new Point3D_t<float>( -0.2 , 0.8 , 1);
-Point3D_t<float>* pv=produitVec(A,B,C);
+        mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+        mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+        mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
 
-}
-    /*int numberOfFacet=out.numberoffacets;
-cout<<"numberOfFacet"<<numberOfFacet<<endl;
-for(int i=0;i<numberOfFacet;i++){
 
-tetgenio::facet f=out.facetlist[i];
-int numberOfPolygon=f.numberofpolygons;
-cout<<"facet["<<i<<"]="<<numberOfPolygon<<endl;
-for(int j=0;j<numberOfPolygon;j++){
-tetgenio::polygon polygon=f.polygonlist[j];
-int numberVertice=polygon.numberofvertices;
-cout<<" polygon["<<j<<"]="<<numberVertice<<endl;
-for(int k=0;k<numberVertice;k++){
-int indexVertice=polygon.vertexlist[k];
 
-}
-}
+        Point3D_t<float>*A=new Point3D_t<float>(0.5 , 0 , 1);
+        Point3D_t<float>*B=new Point3D_t<float>( 0.8 , 0.8 , 1);
+        Point3D_t<float>*C=new Point3D_t<float>( -0.2 , 0.8 , 1);
+        Point3D_t<float>* pv=produitVec(A,B,C);
 
-}
+    }
+    int numberOfFacet=out.numberoffacets;
+    cout<<"numberOfFacet"<<numberOfFacet<<endl;
+    for(int i=0;i<numberOfFacet;i++){
 
-    // DrawMesh_3DScene(parent,"mesh", mesh);
-}
+        tetgenio::facet f=out.facetlist[i];
+        int numberOfPolygon=f.numberofpolygons;
+        cout<<"facet["<<i<<"]="<<numberOfPolygon<<endl;
+        for(int j=0;j<numberOfPolygon;j++){
+            tetgenio::polygon polygon=f.polygonlist[j];
+            int numberVertice=polygon.numberofvertices;
+            cout<<" polygon["<<j<<"]="<<numberVertice<<endl;
+            for(int k=0;k<numberVertice;k++){
+                int indexVertice=polygon.vertexlist[k];
+                cout<< "face " << i << " polygon " << j << " index : " << indexVertice << endl;
+
+            }
+        }
+
+    }
+
+    /*std::vector<Ogre::Vector3> normals(num_vertices, Ogre::Vector3(0,0,0));
+
+    for (std::vector<int>::const_iterator i = indices.begin(); i != indices.end(); std::advance(i, 3))
+    {
+      Ogre::Vector3 v[3] = { vertices[*i], vertices[*(i+1)], vertices[*(i+2)] };
+      Ogre::Vector3 normal = Ogre::Vector3::cross(v[1] - v[0], v[2] - v[0]);
+
+      for (int j = 0; j < 3; ++j)
+      {
+        Ogre::Vector3 a = v[(j+1) % 3] - v[j];
+        Ogre::Vector3 b = v[(j+2) % 3] - v[j];
+        float weight = acos(Ogre::Vector3::dot(a, b) / (a.length() * b.length()));
+        normals[*(i+j)] += weight * normal;
+      }
+    }
+
+    std::for_each(normals.begin(), normals.end(), std::mem_fun_ref(&Ogre::Vector3::normalize));
 */
+    DrawMesh_3DScene(parent,"mesh", mesh);
+}
+
 
 void ExampleApp::initializeOgre()
 {
@@ -622,7 +693,7 @@ void ExampleApp::initializeOgre()
     //m_sceneManager2->setSkyBox(true, "SpaceSkyBox", 10000);
     m_ogreEngine->activateOgreContext();
     m_cameraObject = new CameraNodeObject(name,camera1);
-
+    /*
     // set up Ogre scene 2
     std::string name2 = "scene2";
     m_sceneManager2 = m_root->createSceneManager(Ogre::ST_GENERIC, name2);
@@ -662,7 +733,7 @@ void ExampleApp::initializeOgre()
     //m_sceneManager4->setSkyBox(true, "SpaceSkyBox", 10000);
     m_ogreEngine->activateOgreContext();
     m_cameraObject4 = new CameraNodeObject(name4,camera4);
-
+*/
     std::string file_out="../resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d";
     Examen* exam=tmpLoadData( file_out);
 
@@ -670,11 +741,14 @@ void ExampleApp::initializeOgre()
     // Initialise the DebugDrawer singleton
     new DebugDrawer(m_sceneManager, 0.5f);
 
-    initializeModel(exam,name);
-    initializeModel(exam,name2);
+   initializeModel(exam,name);
+  //  initializeMesh();
+
+
+    /*    initializeModel(exam,name2);
     initializeModel(exam,name3);
     initializeModel(exam,name4);
-
+*/
     // Let's draw the bounding box for the ogre head!
     DebugDrawer::getSingleton().build();
     //m_sceneManager->setSkyBox(true, "SoftBackGround", 10000);
