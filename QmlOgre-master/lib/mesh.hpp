@@ -101,10 +101,12 @@ public:
 
 
         _nbVertice=nbPoint;
-        _vertice=new float[3*_nbVertice];
+        _vertice = new float[3*_nbVertice];
+        _normals = new float[3*_nbVertice];
 
         int indexV=0;
-
+        int indexN = 0;
+        const float sqrt13 = 0.577350269f;
 
         //test1
         _minX=_minY=_minZ=__INT32_MAX__;
@@ -118,6 +120,10 @@ public:
             _vertice[indexV]=p->y;indexV++;
             _vertice[indexV]=p->z;indexV++;
 
+            // allocation normale
+            _normals[indexN] = sqrt13; indexN++;
+            _normals[indexN] = -sqrt13; indexN++;
+            _normals[indexN] = sqrt13; indexN++;
 
             //calcul des min et max
             if(p->x<_minX)_minX=p->x;

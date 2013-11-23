@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "wmanipulation.hpp"
+#include "exampleapp.h"
 
 #include <QWidget>
 #include <QSpinBox>
@@ -36,6 +37,9 @@ void WManipulation::displayTransformationType(int index) {
         std::cout << "Volume" << std::endl;
         break;
     case 2:
+        a->initializeMesh();
+      //  a->initializeModel();
+        // a   blabla
         std::cout << "Maillage" << std::endl;
         break;
     case 3:
@@ -139,8 +143,10 @@ void WManipulation::retranslateUi(const QString &lang) {
     }
 }
 
-WManipulation::WManipulation(QTabWidget* widget)
+WManipulation::WManipulation(QTabWidget* widget, ExampleApp *_a)
 {
+
+    a = _a;
     //Création de nos deux onglets
     manip2D = new QWidget();
     manip3D = new QWidget();

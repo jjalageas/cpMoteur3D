@@ -1,6 +1,8 @@
 #ifndef WMANIPULATION_H
 #define WMANIPULATION_H
 
+#include "exampleapp.h"
+
 #include <QTabWidget>
 #include <QWidget>
 #include <QSpinBox>
@@ -24,7 +26,7 @@ public:
      * @param pas de paramètres.
      * @return .
     */
-    WManipulation(QTabWidget* widget);
+    WManipulation(QTabWidget* widget, ExampleApp *a);
     /**
      * @brief Destructeur de la classe WManipulation.
      * Supprime les 2 onglets.
@@ -58,6 +60,7 @@ private:
     QComboBox *viewType3D;          /**< Combobox qui gère le choix du type de vue (4box, 8box) */
     QComboBox *transformationType;  /**< Combobox qui gère le choix du type de transformation (Volume, Maillage ...) */
 
+    ExampleApp *a;
 public slots:
     /**
      * @brief Fonction appelé par le SIGNAL de la combobox,

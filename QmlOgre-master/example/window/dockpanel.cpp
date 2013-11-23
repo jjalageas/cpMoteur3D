@@ -5,11 +5,12 @@
 
 using namespace std;
 
-DockPanel::DockPanel(QWidget *parent) : QWidget(parent)
+DockPanel::DockPanel(QWidget *parent, ExampleApp *_a) : QWidget(parent)
 {
     _mainLayout = new QGridLayout(this);
     _mainLayout->setSpacing(6);
     _mainLayout->setContentsMargins(11, 11, 11, 11);
+    a = _a;
 }
 
 DockPanel::~DockPanel()
@@ -108,7 +109,7 @@ void DockPanel::setupTabDown()
 
     // Create tabs
     _wEdition = new WEdition(editorWidget);
-    _wManipulation = new WManipulation(_tabDown);
+    _wManipulation = new WManipulation(_tabDown, a);
 
     // Add each tab in the main tab widget
     _tabDown->addTab(editorWidget, tr("Editor"));

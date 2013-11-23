@@ -13,7 +13,7 @@
 #include "wedition.hpp"
 #include "wmanipulation.hpp"
 #include "widgetHisto.hpp"
-
+#include "exampleapp.h"
 
 /**
  * @class DockPanel
@@ -29,7 +29,7 @@ public:
      *        to QWidget'constructor.
      * @param parent    parent widget
      */
-    explicit DockPanel(QWidget *parent = 0);
+    explicit DockPanel(QWidget *parent = 0, ExampleApp*a = NULL);
     /**
      * @brief Destructs the DockPanel
      */
@@ -91,6 +91,7 @@ private:
     WManipulation   *_wManipulation;     /**< contains manipulation panel */
     QGridLayout     *_mainLayout;        /**< main layout*/
     bool            _opaque;             /**< panel opacity*/
+    ExampleApp      *a;
 };
 
 #endif // DOCKPANEL_HPP

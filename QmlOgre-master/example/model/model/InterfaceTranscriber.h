@@ -3,7 +3,7 @@
 
 #include <Struct.hpp>
 #include <GrayViewWindow.h>
-#include <uchar.h>
+//#include <uchar.h>
 
 template<typename T> class Image;
 class Examen;

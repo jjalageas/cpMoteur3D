@@ -39,6 +39,7 @@ public slots:
     Examen* tmpLoadData(std::string filename);
 
     void initializeModel(Examen* exam, std::string name);
+    void initializeMesh();
     void initializeOgre();
 
     void initializeMask(std::string name,Mask3d* mask, std::string managerName);

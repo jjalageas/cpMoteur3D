@@ -34905,7 +34905,7 @@ void tetrahedralize(char *switches, tetgenio *in, tetgenio *out,
   if (bgmin.numberoftetrahedra > 0l) {
     tetrahedralize(&b, &in, NULL, &addin, &bgmin);
   } else {
-    tetrahedralize(&b, &in, NULL, &addin, NULL);
+    tetrahedralize(&b, &in, NULL, &addin, NULL);->start();
   }
 
   return 0;
