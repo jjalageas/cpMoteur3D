@@ -626,7 +626,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         Point3D_t<float> p[3];
         for (int j = 0; j < 3; ++j) {
             int tc = out.trifacelist[i*3+j];
-            int pi = tc*3;
+            int pi = (tc-1)*3;
             p[j].x = out.pointlist[pi+0];
             p[j].y= out.pointlist[pi+1];
             p[j].z= out.pointlist[pi+2];
