@@ -102,11 +102,7 @@ void ExampleApp::initializeModel(Examen* exam, std::string name)
     Mask3d* mask=exam->getMask();
 
     //dessine le nuage de point
-   // initializeMask("mask", mask, name);
-     //
-    DrawMask_3DScene(NodeRoot,name, mask);
-     Delaunay_it(NodeRoot, name, mask);
-    // DrawMesh_3DScene(NodeRoot, name, new Mesh(mask));
+    initializeMask("mask", mask, name);
 }
 
 
@@ -121,24 +117,10 @@ void ExampleApp::initializeMesh()
     Ogre::SceneNode* NodeRoot = Ogre::Root::getSingleton().getSceneManager(name)->getRootSceneNode();
 
     Volume* data=exam->getImage();
-
-    //récupère les coupes et crée la boundingbox
     DrawBoundingBox(NodeRoot,"boundingBox", data );
-
-    //récupère le skeleton
-    //Skeleton* skel=examAfter->getSkeleton();
-    //initializeSkeleton("skeleton" ,skel);
-
-
-    //récupère le mask 3D (nuage de point)
     Mask3d* mask=exam->getMask();
-
-    //dessine le nuage de point
-    // initializeMask("mask", mask, name);
-    // DrawMask_3DScene(NodeRoot,name, mask);
-
     Delaunay_it(NodeRoot, name, mask);
-    // DrawMesh_3DScene(NodeRoot, name, new Mesh(mask));
+
 }
 
 void ExampleApp::DrawLine(Ogre::SceneNode*parent,const Ogre::Vector3& start, const Ogre::Vector3& stop, const Ogre::ColourValue& col)
@@ -524,10 +506,10 @@ void ExampleApp::DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* 
     thisSceneNode->attachObject(thisEntity);
 }
 
-Point3D_t<float>* produitVec(Point3D_t<float>*A,Point3D_t<float>*B,Point3D_t<float>*C)
+Point3D_t<float>* ExampleApp::produitVec(Point3D_t<float> A,Point3D_t<float> B,Point3D_t<float> C)
 {
-    Point3D_t<float> vecAB(B->x-A->x,B->y-A->y,B->z-A->z);
-    Point3D_t<float> vecBC(C->x-B->x,C->y-B->y,C->z-B->z);
+    Point3D_t<float> vecAB(B.x-A.x,B.y-A.y,B.z-A.z);
+    Point3D_t<float> vecBC(C.x-B.x,C.y-B.y,C.z-B.z);
     Point3D_t<float>* ProdVect=new Point3D_t<float> (vecAB.y*vecBC.z-vecAB.z*vecBC.y,
                                                      vecAB.z*vecBC.x-vecAB.x*vecBC.z,
                                                      vecAB.x*vecBC.y-vecAB.y*vecBC.x);
@@ -537,7 +519,9 @@ Point3D_t<float>* produitVec(Point3D_t<float>*A,Point3D_t<float>*B,Point3D_t<flo
 
 void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask){
 
-    Mesh* mesh=new Mesh(mask);
+    //Mesh* mesh=new Mesh(mask);
+    Mesh * mesh = new Mesh();
+    mesh->test();
 
     //calcul de Delaunay
     tetgenio in, out;
@@ -611,10 +595,33 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
     cout<<"numberoftrifaces: "<< out.numberoftrifaces<<endl;
     mesh->createTabFace(out.numberoftrifaces);
 
+    Point3D_t<float>* normalTab[out.numberoftrifaces];// = new Point3D_t<float>[out.numberoftrifaces];
+    mesh->createTabFace(out.numberoftrifaces);
+    for(int i = 0; i < out.numberoftrifaces; i++) {
 
-    for (i = 0; i < out.numberoftrifaces; i++) {
         cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
+      //  mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
 
+        Point3D_t<float> p[3];
+        for (int j = 0; j < 3; ++j) {
+            int tc = out.trifacelist[i+j];
+            int pi = tc*3;
+            p[j].x = out.pointlist[pi+0];
+            p[j].y= out.pointlist[pi+1];
+            p[j].z= out.pointlist[pi+2];
+            // cout << p.x << ":" << p.y << ":" << p.z << endl;
+            // pointTab[i*3+j] = p[j];
+        }
+        normalTab[i] = produitVec(p[0], p[1], p[2]);
+        float a = normalTab[i]->x;
+        float b = normalTab[i]->y;
+        float c = normalTab[i]->z;
+        Vector3d* u = new Vector3d(a ,b ,c);
+        u->normalize();
+        Point3D_t<float>* pn = new Point3D_t<float>(u->x, u->y, u->z);
+        normalTab[i] = pn;
+    }
+    /*
         mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
         mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
         mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
@@ -665,7 +672,11 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
 
     std::for_each(normals.begin(), normals.end(), std::mem_fun_ref(&Ogre::Vector3::normalize));
 */
+    out.save_nodes("mesh");
+    out.save_elements("mesh");
+    out.save_faces("mesh");
     DrawMesh_3DScene(parent,"mesh", mesh);
+
 }
 
 

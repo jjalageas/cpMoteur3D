@@ -57,6 +57,7 @@ public slots:
     void DrawMask_3DScene(Ogre::SceneNode*parent,std::string name,Mask3d* mask);
     void DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh);
     void Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask);
+    Point3D_t<float>* produitVec(Point3D_t<float> A,Point3D_t<float> B,Point3D_t<float> C);
     void addContent();
 
 private:

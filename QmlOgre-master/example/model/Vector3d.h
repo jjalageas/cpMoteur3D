@@ -5,9 +5,6 @@
 
 class Vector3d
 {
-    float   x;
-    float   y;
-    float   z;
 
 public:
     Vector3d();
@@ -19,6 +16,10 @@ public:
     Vector3d operator %(const Vector3d& v) const;
     Vector3d& operator /=(float t);
 
+
+    float   x;
+    float   y;
+    float   z;
 };
 
 #endif // Vector3d_H
