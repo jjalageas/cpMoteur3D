@@ -102,9 +102,31 @@ void ExampleApp::initializeModel(Examen* exam, std::string name)
     Mask3d* mask=exam->getMask();
 
     //dessine le nuage de point
+   // Delaunay_it(NodeRoot, name, mask);
     initializeMask("mask", mask, name);
 }
 
+void ExampleApp::initializeModel2(Examen* exam, std::string name)
+{
+    Ogre::SceneNode* NodeRoot = Ogre::Root::getSingleton().getSceneManager(name)->getRootSceneNode();
+
+    Volume* data=exam->getImage();
+
+    //récupère les coupes et crée la boundingbox
+    DrawBoundingBox(NodeRoot,"boundingBox", data );
+
+    //récupère le skeleton
+    //Skeleton* skel=examAfter->getSkeleton();
+    //initializeSkeleton("skeleton" ,skel);
+
+
+    //récupère le mask 3D (nuage de point)
+    Mask3d* mask=exam->getMask();
+
+    //dessine le nuage de point
+    Delaunay_it(NodeRoot, name, mask);
+    //initializeMask("mask", mask, name);
+}
 
 void ExampleApp::initializeMesh()
 {
@@ -593,10 +615,9 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
     cout<<"numberofvpoints "<<out.numberofvpoints<<endl;
 
     cout<<"numberoftrifaces: "<< out.numberoftrifaces<<endl;
-    mesh->createTabFace(out.numberoftrifaces);
 
     Point3D_t<float>* normalTab[out.numberoftrifaces];// = new Point3D_t<float>[out.numberoftrifaces];
-    mesh->createTabFace(out.numberoftrifaces);
+   // mesh->createTabFace(out.numberoftrifaces);
     for(int i = 0; i < out.numberoftrifaces; i++) {
 
         cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
@@ -604,7 +625,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
 
         Point3D_t<float> p[3];
         for (int j = 0; j < 3; ++j) {
-            int tc = out.trifacelist[i+j];
+            int tc = out.trifacelist[i*3+j];
             int pi = tc*3;
             p[j].x = out.pointlist[pi+0];
             p[j].y= out.pointlist[pi+1];
@@ -613,14 +634,16 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
             // pointTab[i*3+j] = p[j];
         }
         normalTab[i] = produitVec(p[0], p[1], p[2]);
-        float a = normalTab[i]->x;
-        float b = normalTab[i]->y;
-        float c = normalTab[i]->z;
-        Vector3d* u = new Vector3d(a ,b ,c);
+        Vector3d* u = new Vector3d(normalTab[i]->x, normalTab[i]->y, normalTab[i]->z);
         u->normalize();
         Point3D_t<float>* pn = new Point3D_t<float>(u->x, u->y, u->z);
         normalTab[i] = pn;
     }
+
+    for(int i = 0; i < out.numberoftrifaces; i++)
+        cout << normalTab[i]->x << ":";
+    cout << endl;
+
     /*
         mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
         mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
@@ -672,9 +695,9 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
 
     std::for_each(normals.begin(), normals.end(), std::mem_fun_ref(&Ogre::Vector3::normalize));
 */
-    out.save_nodes("mesh");
-    out.save_elements("mesh");
-    out.save_faces("mesh");
+    //out.save_nodes("mesh");
+    //out.save_elements("mesh");
+    //out.save_faces("mesh");
     DrawMesh_3DScene(parent,"mesh", mesh);
 
 }
@@ -704,7 +727,7 @@ void ExampleApp::initializeOgre()
     //m_sceneManager2->setSkyBox(true, "SpaceSkyBox", 10000);
     m_ogreEngine->activateOgreContext();
     m_cameraObject = new CameraNodeObject(name,camera1);
-    /*
+
     // set up Ogre scene 2
     std::string name2 = "scene2";
     m_sceneManager2 = m_root->createSceneManager(Ogre::ST_GENERIC, name2);
@@ -744,7 +767,7 @@ void ExampleApp::initializeOgre()
     //m_sceneManager4->setSkyBox(true, "SpaceSkyBox", 10000);
     m_ogreEngine->activateOgreContext();
     m_cameraObject4 = new CameraNodeObject(name4,camera4);
-*/
+
     std::string file_out="../resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d";
     Examen* exam=tmpLoadData( file_out);
 
@@ -756,10 +779,10 @@ void ExampleApp::initializeOgre()
   //  initializeMesh();
 
 
-    /*    initializeModel(exam,name2);
+    initializeModel2(exam,name2);
     initializeModel(exam,name3);
     initializeModel(exam,name4);
-*/
+
     // Let's draw the bounding box for the ogre head!
     DebugDrawer::getSingleton().build();
     //m_sceneManager->setSkyBox(true, "SoftBackGround", 10000);
