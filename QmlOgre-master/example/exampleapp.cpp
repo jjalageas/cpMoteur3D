@@ -547,7 +547,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
 
     //calcul de Delaunay
     tetgenio in, out;
-    int i;
+    //int i;
 
     MiTimer* t2=new MiTimer();
     t2->start();
@@ -569,7 +569,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
     cout<<"start tetrahedralize"<<endl;
     tetgenbehavior b;
     //char *switches="pq1.414a0.1";
-    char *switches="w";
+    char *switches="Qv";
     if (!b.parse_commandline(switches)) {
         terminatetetgen(1);
     }
@@ -616,9 +616,12 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
 
     cout<<"numberoftrifaces: "<< out.numberoftrifaces<<endl;
 
-    Point3D_t<float>* normalTab[out.numberoftrifaces];// = new Point3D_t<float>[out.numberoftrifaces];
+    int nbtri = out.numberoftrifaces;
+    int nbpts = out.numberofpoints;
+    Point3D_t<float> faceTab[nbtri * 3];
+    Point3D_t<float>* normalTab[nbtri];
    // mesh->createTabFace(out.numberoftrifaces);
-    for(int i = 0; i < out.numberoftrifaces; i++) {
+    for(int i = 0; i < nbtri; i++) {
 
         cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
       //  mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
@@ -627,11 +630,11 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         for (int j = 0; j < 3; ++j) {
             int tc = out.trifacelist[i*3+j];
             int pi = (tc-1)*3;
-            p[j].x = out.pointlist[pi+0];
-            p[j].y= out.pointlist[pi+1];
-            p[j].z= out.pointlist[pi+2];
-            // cout << p.x << ":" << p.y << ":" << p.z << endl;
-            // pointTab[i*3+j] = p[j];
+            p[j].x = out.pointlist[(pi+0)];
+            p[j].y= out.pointlist[(pi+1)];
+            p[j].z= out.pointlist[(pi+2)];
+            cout << p[j].x << ":" << p[j].y << ":" << p[j].z << endl;
+            faceTab[i*3+j] = p[j];
         }
         normalTab[i] = produitVec(p[0], p[1], p[2]);
         Vector3d* u = new Vector3d(normalTab[i]->x, normalTab[i]->y, normalTab[i]->z);
@@ -640,9 +643,57 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         normalTab[i] = pn;
     }
 
-    for(int i = 0; i < out.numberoftrifaces; i++)
-        cout << normalTab[i]->x << ":";
-    cout << endl;
+
+    Point3D_t<float> normalMoy[nbpts];
+    for(int i = 0; i < nbpts*3; i+=3){
+       std::vector< Point3D_t<float>* > adj;
+        for(int j=0; j < nbtri * 3; j++){
+             if(out.pointlist[i] == faceTab[j].x && out.pointlist[i+1] == faceTab[j].y && out.pointlist[i+2] == faceTab[j].z){
+               adj.push_back(normalTab[(int)(j/3)]);
+             }
+        }
+
+        for(int k=0; k<adj.size(); k++)
+            cout << "normale adj "<< adj[k]->x << "," << adj[k]->y << "," << adj[k]->z << endl;
+
+
+
+
+        Point3D_t<float> pnorm;
+        pnorm.x =0;
+        pnorm.y =0;
+        pnorm.z =0;
+        cout << "toto ";
+        for(int k=0; k<adj.size(); k++){
+            pnorm.x += adj[k]->x;
+            pnorm.y += adj[k]->y;
+            pnorm.z += adj[k]->z;
+        }
+        cout << "avant div " << pnorm.x << pnorm.y << pnorm.z <<endl;
+
+        cout << "ee ";
+        pnorm.x = pnorm.x / adj.size();
+        pnorm.y = pnorm.y / adj.size();
+        pnorm.z = pnorm.z / adj.size();
+
+        cout << pnorm.x << "," << pnorm.y << "," << pnorm.z <<endl;
+
+        normalMoy[i/3].x = pnorm.x;
+        normalMoy[i/3].y = pnorm.y;
+        normalMoy[i/3].z = pnorm.z;
+        cout << normalMoy[i/3].x << normalMoy[i/3].y << normalMoy[i/3].z << endl;
+
+    }
+/*
+    for(int i = 0; i < nbpts; i++){
+        cout << normalMoy[i]->x << ":" << endl;
+        cout << normalMoy[i]->y << ":" << endl;
+        cout << normalMoy[i]->z << ":" << endl;
+    }
+
+
+
+
 
     /*
         mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
