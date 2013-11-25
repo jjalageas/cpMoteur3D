@@ -33,6 +33,7 @@ Vector3d& normal(struct::Point3D_t<float> p1, struct::Point3D_t<float> p2, struc
 }
 
 
+
 static QString appPath()
 {
     QString path = QCoreApplication::applicationDirPath();
@@ -531,7 +532,7 @@ void ExampleApp::DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* 
 Point3D_t<float>* ExampleApp::produitVec(Point3D_t<float> A,Point3D_t<float> B,Point3D_t<float> C)
 {
     Point3D_t<float> vecAB(B.x-A.x,B.y-A.y,B.z-A.z);
-    Point3D_t<float> vecBC(C.x-B.x,C.y-B.y,C.z-B.z);
+    Point3D_t<float> vecBC(C.x-A.x,C.y-A.y,C.z-A.z);
     Point3D_t<float>* ProdVect=new Point3D_t<float> (vecAB.y*vecBC.z-vecAB.z*vecBC.y,
                                                      vecAB.z*vecBC.x-vecAB.x*vecBC.z,
                                                      vecAB.x*vecBC.y-vecAB.y*vecBC.x);
@@ -541,9 +542,9 @@ Point3D_t<float>* ExampleApp::produitVec(Point3D_t<float> A,Point3D_t<float> B,P
 
 void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask){
 
-    //Mesh* mesh=new Mesh(mask);
-    Mesh * mesh = new Mesh();
-    mesh->test();
+    Mesh* mesh=new Mesh(mask);
+    //Mesh * mesh = new Mesh();
+    //mesh->test();
 
     //calcul de Delaunay
     tetgenio in, out;
@@ -623,7 +624,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
    // mesh->createTabFace(out.numberoftrifaces);
     for(int i = 0; i < nbtri; i++) {
 
-        cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
+       // cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
       //  mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
 
         Point3D_t<float> p[3];
@@ -654,7 +655,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         }
 
         for(int k=0; k<adj.size(); k++)
-            cout << "normale adj "<< adj[k]->x << "," << adj[k]->y << "," << adj[k]->z << endl;
+            cout << "normale adj " << k << ":" << adj[k]->x << "," << adj[k]->y << "," << adj[k]->z << endl;
 
 
 
@@ -663,7 +664,8 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         pnorm.x =0;
         pnorm.y =0;
         pnorm.z =0;
-        cout << "toto ";
+       // cout << "toto ";
+        if(adj.size() > 0){
         for(int k=0; k<adj.size(); k++){
             pnorm.x += adj[k]->x;
             pnorm.y += adj[k]->y;
@@ -671,18 +673,29 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         }
         cout << "avant div " << pnorm.x << pnorm.y << pnorm.z <<endl;
 
-        cout << "ee ";
+       // cout << "ee ";
         pnorm.x = pnorm.x / adj.size();
         pnorm.y = pnorm.y / adj.size();
         pnorm.z = pnorm.z / adj.size();
 
-        cout << pnorm.x << "," << pnorm.y << "," << pnorm.z <<endl;
+        cout << "apres div" << pnorm.x << "," << pnorm.y << "," << pnorm.z <<endl;
 
         normalMoy[i/3].x = pnorm.x;
         normalMoy[i/3].y = pnorm.y;
         normalMoy[i/3].z = pnorm.z;
-        cout << normalMoy[i/3].x << normalMoy[i/3].y << normalMoy[i/3].z << endl;
+        }
+        else{
+            normalMoy[i/3].x = 0;
+            normalMoy[i/3].y = 0;
+            normalMoy[i/3].z = 0;
+        }
+       // cout << normalMoy[i/3].x << normalMoy[i/3].y << normalMoy[i/3].z << endl;
 
+    }
+    for(int i=0; i< nbpts*3; i+=3){
+        mesh->_normals[i] = normalMoy[i/3].x;
+        mesh->_normals[i+1] = normalMoy[i/3].y;
+        mesh->_normals[i+2] = normalMoy[i/3].z;
     }
 /*
     for(int i = 0; i < nbpts; i++){
@@ -779,7 +792,7 @@ void ExampleApp::initializeOgre()
     m_ogreEngine->activateOgreContext();
     m_cameraObject = new CameraNodeObject(name,camera1);
 
-    // set up Ogre scene 2
+  /*  // set up Ogre scene 2
     std::string name2 = "scene2";
     m_sceneManager2 = m_root->createSceneManager(Ogre::ST_GENERIC, name2);
     Ogre::Camera *camera2 = m_sceneManager2->createCamera("myCamera2");
@@ -817,7 +830,7 @@ void ExampleApp::initializeOgre()
     m_sceneManager4->setAmbientLight(Ogre::ColourValue(0.3, 0.3, 0.3));
     //m_sceneManager4->setSkyBox(true, "SpaceSkyBox", 10000);
     m_ogreEngine->activateOgreContext();
-    m_cameraObject4 = new CameraNodeObject(name4,camera4);
+    m_cameraObject4 = new CameraNodeObject(name4,camera4);*/
 
     std::string file_out="../resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d";
     Examen* exam=tmpLoadData( file_out);
@@ -827,12 +840,12 @@ void ExampleApp::initializeOgre()
     new DebugDrawer(m_sceneManager, 0.5f);
 
    initializeModel(exam,name);
-  //  initializeMesh();
+   //initializeMesh();
 
 
-    initializeModel2(exam,name2);
-    initializeModel(exam,name3);
-    initializeModel(exam,name4);
+   //initializeModel2(exam,name2);
+   //initializeModel(exam,name3);
+   //initializeModel(exam,name4);
 
     // Let's draw the bounding box for the ogre head!
     DebugDrawer::getSingleton().build();
