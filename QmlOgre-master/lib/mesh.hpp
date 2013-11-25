@@ -167,6 +167,8 @@ public:
 
 
     void createTabFace(int nbelement){_nbFace=nbelement;_sizeFace=nbelement*3;_face=new unsigned short[_sizeFace];}
+    void createTabNormals(int nbelement){_normals=new float[nbelement*3];}
+
     void setface(int s1,int s2,int s3,int index){_face[index]=s1;_face[index+1]=s2;_face[index+2]=s3;}
 
     void displayParameter(){
@@ -227,8 +229,9 @@ public:
         _colour[18]= 0.0;_colour[19]=1.0;_colour[20]=1.0;        //6 colour
         _colour[21]=0.0;_colour[22]=0.0;_colour[23]=1.0;        //7 colour
 
-_nbFace=12;
-_sizeFace=36;
+        _nbFace=12;
+        _sizeFace=36;
+
         _face=new unsigned short[36];
 
         _face[0]=0; _face[1]=2; _face[2]=3;
@@ -240,9 +243,9 @@ _sizeFace=36;
         _face[18]= 0;_face[19]=7;_face[20]=4;
         _face[21]=0;_face[22]=3;_face[23]=7;
         _face[24]=0;_face[25]=5;_face[26]=1;
-          _face[27]=0;_face[28]=4;_face[29]=5;
-           _face[30]=2;_face[31]=7;_face[32]=3;
-           _face[33]=2;_face[34]=6;_face[35]=7;
+        _face[27]=0;_face[28]=4;_face[29]=5;
+        _face[30]=2;_face[31]=7;_face[32]=3;
+        _face[33]=2;_face[34]=6;_face[35]=7;
 
     }
 
@@ -253,9 +256,9 @@ private:
 
     float* _vertice;
     int _nbVertice;
-    float* _normals;
+
     float* _colour;
-    unsigned short* _face;
+
     int _sizeFace;
     int _nbFace;
 
@@ -271,6 +274,10 @@ private:
     int _height;
     int _depth;
 
+
+public:
+     float* _normals;
+     unsigned short* _face;
 };
 
 #endif // MESH_HPP

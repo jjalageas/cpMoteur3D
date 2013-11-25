@@ -103,31 +103,10 @@ void ExampleApp::initializeModel(Examen* exam, std::string name)
     Mask3d* mask=exam->getMask();
 
     //dessine le nuage de point
-   // Delaunay_it(NodeRoot, name, mask);
-    initializeMask("mask", mask, name);
-}
-
-void ExampleApp::initializeModel2(Examen* exam, std::string name)
-{
-    Ogre::SceneNode* NodeRoot = Ogre::Root::getSingleton().getSceneManager(name)->getRootSceneNode();
-
-    Volume* data=exam->getImage();
-
-    //récupère les coupes et crée la boundingbox
-    DrawBoundingBox(NodeRoot,"boundingBox", data );
-
-    //récupère le skeleton
-    //Skeleton* skel=examAfter->getSkeleton();
-    //initializeSkeleton("skeleton" ,skel);
-
-
-    //récupère le mask 3D (nuage de point)
-    Mask3d* mask=exam->getMask();
-
-    //dessine le nuage de point
     Delaunay_it(NodeRoot, name, mask);
-    //initializeMask("mask", mask, name);
+    // initializeMask("mask", mask, name);
 }
+
 
 void ExampleApp::initializeMesh()
 {
@@ -302,7 +281,9 @@ void ExampleApp::initializeMask(std::string name,Mask3d* mask,std::string manage
     Ogre::SceneManager* sceneManager = Ogre::Root::getSingleton().getSceneManager(managerName);
     Ogre::ManualObject* m_ManualObject=sceneManager->createManualObject(name);
     int width=mask->getWidth();
-    int height=mask->getHeight();
+    int height=mask->getHeight(); //out.save_nodes("mesh");
+    //out.save_elements("mesh");
+    //out.save_faces("mesh");
     int depth=mask->getDepth();
     m_ManualObject->setDynamic(true);
     m_ManualObject->begin("BaseWhiteNoLighting",Ogre::RenderOperation::OT_POINT_LIST);
@@ -542,7 +523,7 @@ Point3D_t<float>* ExampleApp::produitVec(Point3D_t<float> A,Point3D_t<float> B,P
 
 void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask){
 
-    Mesh* mesh=new Mesh(mask);
+    Mesh* mesh = new Mesh(mask);
     //Mesh * mesh = new Mesh();
     //mesh->test();
 
@@ -562,7 +543,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
     in.pointlist = new REAL[sizeTabVertice];
     for(int i=0;i<sizeTabVertice;++i)
     {
-        // creation d'un noeux.
+        // creation d'un noeud
         in.pointlist[i] = mesh->getVerticeValue(i);
     }
 
@@ -621,11 +602,11 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
     int nbpts = out.numberofpoints;
     Point3D_t<float> faceTab[nbtri * 3];
     Point3D_t<float>* normalTab[nbtri];
-   // mesh->createTabFace(out.numberoftrifaces);
-    for(int i = 0; i < nbtri; i++) {
 
-       // cout<<"triface[: "<<i + out.firstnumber<<"]="<< out.trifacelist[i * 3]<<","<<out.trifacelist[i * 3+1]<<"," <<out.trifacelist[i * 3+2]<<endl;
-      //  mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
+    mesh->createTabFace(out.numberoftrifaces);
+
+    for(int i = 0; i < nbtri; i++) {
+        mesh->setface( out.trifacelist[i * 3]-1, out.trifacelist[i * 3+1]-1, out.trifacelist[i * 3+2]-1, i*3);
 
         Point3D_t<float> p[3];
         for (int j = 0; j < 3; ++j) {
@@ -644,123 +625,65 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         normalTab[i] = pn;
     }
 
-
     Point3D_t<float> normalMoy[nbpts];
+
+
     for(int i = 0; i < nbpts*3; i+=3){
-       std::vector< Point3D_t<float>* > adj;
+        std::vector< Point3D_t<float>* > adj;
         for(int j=0; j < nbtri * 3; j++){
-             if(out.pointlist[i] == faceTab[j].x && out.pointlist[i+1] == faceTab[j].y && out.pointlist[i+2] == faceTab[j].z){
-               adj.push_back(normalTab[(int)(j/3)]);
-             }
+            if(out.pointlist[i] == faceTab[j].x && out.pointlist[i+1] == faceTab[j].y && out.pointlist[i+2] == faceTab[j].z){
+                adj.push_back(normalTab[(int)(j/3)]);
+            }
         }
-
-        for(int k=0; k<adj.size(); k++)
-            cout << "normale adj " << k << ":" << adj[k]->x << "," << adj[k]->y << "," << adj[k]->z << endl;
-
-
-
 
         Point3D_t<float> pnorm;
         pnorm.x =0;
         pnorm.y =0;
         pnorm.z =0;
-       // cout << "toto ";
+        cout<<"numberofpoints "<<out.numberofpoints<<endl;
         if(adj.size() > 0){
-        for(int k=0; k<adj.size(); k++){
-            pnorm.x += adj[k]->x;
-            pnorm.y += adj[k]->y;
-            pnorm.z += adj[k]->z;
-        }
-        cout << "avant div " << pnorm.x << pnorm.y << pnorm.z <<endl;
+            for(int k=0; k<adj.size(); k++){
 
-       // cout << "ee ";
-        pnorm.x = pnorm.x / adj.size();
-        pnorm.y = pnorm.y / adj.size();
-        pnorm.z = pnorm.z / adj.size();
+                pnorm.x += adj[k]->x;
+                pnorm.y += adj[k]->y;
+                pnorm.z += adj[k]->z;
+            }
 
-        cout << "apres div" << pnorm.x << "," << pnorm.y << "," << pnorm.z <<endl;
+            pnorm.x = pnorm.x / adj.size();
+            pnorm.y = pnorm.y / adj.size();
+            pnorm.z = pnorm.z / adj.size();
 
-        normalMoy[i/3].x = pnorm.x;
-        normalMoy[i/3].y = pnorm.y;
-        normalMoy[i/3].z = pnorm.z;
+
+            normalMoy[i/3].x = pnorm.x;
+            normalMoy[i/3].y = pnorm.y;
+            normalMoy[i/3].z = pnorm.z;
         }
         else{
             normalMoy[i/3].x = 0;
             normalMoy[i/3].y = 0;
             normalMoy[i/3].z = 0;
         }
-       // cout << normalMoy[i/3].x << normalMoy[i/3].y << normalMoy[i/3].z << endl;
-
     }
+
+
+    mesh->createTabNormals(nbpts);
+
     for(int i=0; i< nbpts*3; i+=3){
         mesh->_normals[i] = normalMoy[i/3].x;
         mesh->_normals[i+1] = normalMoy[i/3].y;
         mesh->_normals[i+2] = normalMoy[i/3].z;
     }
-/*
+
     for(int i = 0; i < nbpts; i++){
-        cout << normalMoy[i]->x << ":" << endl;
-        cout << normalMoy[i]->y << ":" << endl;
-        cout << normalMoy[i]->z << ":" << endl;
+        cout << normalMoy[i].x << ":" << endl;
+        cout << normalMoy[i].y << ":" << endl;
+        cout << normalMoy[i].z << ":" << endl;
     }
 
 
-
-
-
-    /*
-        mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
-        mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
-        mesh->setface( out.trifacelist[i * 3], out.trifacelist[i * 3+1], out.trifacelist[i * 3+2],i + out.firstnumber);
-
-
-
-        Point3D_t<float>*A=new Point3D_t<float>(0.5 , 0 , 1);
-        Point3D_t<float>*B=new Point3D_t<float>( 0.8 , 0.8 , 1);
-        Point3D_t<float>*C=new Point3D_t<float>( -0.2 , 0.8 , 1);
-        Point3D_t<float>* pv=produitVec(A,B,C);
-
-    }
-    int numberOfFacet=out.numberoffacets;
-    cout<<"numberOfFacet"<<numberOfFacet<<endl;
-    for(int i=0;i<numberOfFacet;i++){
-
-        tetgenio::facet f=out.facetlist[i];
-        int numberOfPolygon=f.numberofpolygons;
-        cout<<"facet["<<i<<"]="<<numberOfPolygon<<endl;
-        for(int j=0;j<numberOfPolygon;j++){
-            tetgenio::polygon polygon=f.polygonlist[j];
-            int numberVertice=polygon.numberofvertices;
-            cout<<" polygon["<<j<<"]="<<numberVertice<<endl;
-            for(int k=0;k<numberVertice;k++){
-                int indexVertice=polygon.vertexlist[k];
-                cout<< "face " << i << " polygon " << j << " index : " << indexVertice << endl;
-
-            }
-        }
-
-    }
-
-    /*std::vector<Ogre::Vector3> normals(num_vertices, Ogre::Vector3(0,0,0));
-
-    for (std::vector<int>::const_iterator i = indices.begin(); i != indices.end(); std::advance(i, 3))
-    {
-      Ogre::Vector3 v[3] = { vertices[*i], vertices[*(i+1)], vertices[*(i+2)] };
-      Ogre::Vector3 normal = Ogre::Vector3::cross(v[1] - v[0], v[2] - v[0]);
-
-      for (int j = 0; j < 3; ++j)
-      {
-        Ogre::Vector3 a = v[(j+1) % 3] - v[j];
-        Ogre::Vector3 b = v[(j+2) % 3] - v[j];
-        float weight = acos(Ogre::Vector3::dot(a, b) / (a.length() * b.length()));
-        normals[*(i+j)] += weight * normal;
-      }
-    }
-
-    std::for_each(normals.begin(), normals.end(), std::mem_fun_ref(&Ogre::Vector3::normalize));
-*/
     //out.save_nodes("mesh");
-    //out.save_elements("mesh");
+    //out.save_elements("mesh");u
+
     //out.save_faces("mesh");
     DrawMesh_3DScene(parent,"mesh", mesh);
 
@@ -792,7 +715,7 @@ void ExampleApp::initializeOgre()
     m_ogreEngine->activateOgreContext();
     m_cameraObject = new CameraNodeObject(name,camera1);
 
-  /*  // set up Ogre scene 2
+    /*  // set up Ogre scene 2
     std::string name2 = "scene2";
     m_sceneManager2 = m_root->createSceneManager(Ogre::ST_GENERIC, name2);
     Ogre::Camera *camera2 = m_sceneManager2->createCamera("myCamera2");
@@ -839,13 +762,13 @@ void ExampleApp::initializeOgre()
     // Initialise the DebugDrawer singleton
     new DebugDrawer(m_sceneManager, 0.5f);
 
-   initializeModel(exam,name);
-   //initializeMesh();
+    initializeModel(exam,name);
 
 
-   //initializeModel2(exam,name2);
-   //initializeModel(exam,name3);
-   //initializeModel(exam,name4);
+
+    //initializeModel(exam,name2);
+    //initializeModel(exam,name3);
+    //initializeModel(exam,name4);
 
     // Let's draw the bounding box for the ogre head!
     DebugDrawer::getSingleton().build();
