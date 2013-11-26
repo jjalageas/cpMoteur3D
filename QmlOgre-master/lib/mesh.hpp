@@ -102,7 +102,6 @@ public:
 
         _nbVertice=nbPoint;
         _vertice = new float[3*_nbVertice];
-        //_normals = new float[3*_nbVertice];
 
         int indexV=0;
        // int indexN = 0;
@@ -119,11 +118,6 @@ public:
             _vertice[indexV]=p->x;indexV++;
             _vertice[indexV]=p->y;indexV++;
             _vertice[indexV]=p->z;indexV++;
-
-            // allocation normale
-          //  _normals[indexN] = sqrt13; indexN++;
-           // _normals[indexN] = -sqrt13; indexN++;
-           // _normals[indexN] = sqrt13; indexN++;
 
             //calcul des min et max
             if(p->x<_minX)_minX=p->x;
@@ -168,8 +162,12 @@ public:
 
     void createTabFace(int nbelement){_nbFace=nbelement;_sizeFace=nbelement*3;_face=new unsigned short[_sizeFace];}
     void createTabNormals(int nbelement){_normals=new float[nbelement*3];}
+    void createTabColours(int nbelement){_colour=new float[nbelement*3];}
 
     void setface(int s1,int s2,int s3,int index){_face[index]=s1;_face[index+1]=s2;_face[index+2]=s3;}
+    void setnormal(int index,int val){_normals[index]=val;}
+    void setcolour(int index,int val){_colour[index]=val;}
+
 
     void displayParameter(){
         std::cout<<"----------------------------------"<<std::endl;
@@ -257,10 +255,13 @@ private:
     float* _vertice;
     int _nbVertice;
 
-    float* _colour;
 
     int _sizeFace;
     int _nbFace;
+
+    float* _normals;
+    unsigned short* _face;
+    float* _colour;
 
     //definit la boundingBox
     int _minX;
@@ -275,9 +276,7 @@ private:
     int _depth;
 
 
-public:
-     float* _normals;
-     unsigned short* _face;
+
 };
 
 #endif // MESH_HPP

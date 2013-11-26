@@ -640,7 +640,7 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
         pnorm.x =0;
         pnorm.y =0;
         pnorm.z =0;
-        cout<<"numberofpoints "<<out.numberofpoints<<endl;
+
         if(adj.size() > 0){
             for(int k=0; k<adj.size(); k++){
 
@@ -667,23 +667,21 @@ void ExampleApp::Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mas
 
 
     mesh->createTabNormals(nbpts);
+    mesh->createTabColours(nbpts);
 
     for(int i=0; i< nbpts*3; i+=3){
-        mesh->_normals[i] = normalMoy[i/3].x;
-        mesh->_normals[i+1] = normalMoy[i/3].y;
-        mesh->_normals[i+2] = normalMoy[i/3].z;
-    }
+        mesh->setnormal(i,normalMoy[i/3].x);
+        mesh->setnormal(i+1,normalMoy[i/3].y);
+        mesh->setnormal(i+2,normalMoy[i/3].z);
 
-    for(int i = 0; i < nbpts; i++){
-        cout << normalMoy[i].x << ":" << endl;
-        cout << normalMoy[i].y << ":" << endl;
-        cout << normalMoy[i].z << ":" << endl;
-    }
+        if(i%2 == 0)
+            mesh->setcolour(i, 1.0);
+        else mesh->setcolour(i,0.0);
 
+    }
 
     //out.save_nodes("mesh");
     //out.save_elements("mesh");u
-
     //out.save_faces("mesh");
     DrawMesh_3DScene(parent,"mesh", mesh);
 
