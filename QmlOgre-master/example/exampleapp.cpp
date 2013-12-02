@@ -762,8 +762,6 @@ void ExampleApp::initializeOgre()
 
     initializeModel(exam,name);
 
-
-
     //initializeModel(exam,name2);
     //initializeModel(exam,name3);
     //initializeModel(exam,name4);

@@ -84,6 +84,13 @@ private slots:
     void slotChangeLanguageToSpanish();
 
     /**
+     * @brief Called when the 'Browse' action is invoked.
+     */
+    void slotBrowse();
+
+
+
+    /**
      * @brief Called when the 'Open' action is invoked.
      */
     void slotOpen();
@@ -98,6 +105,7 @@ private slots:
      */
     void slotDualScreen();
 
+
 private:
     QMenu *fileMenu;            /**< Menu File */
     QMenu *optionMenu;          /**< Menu Option */
@@ -105,6 +113,7 @@ private:
     QMenu *language;            /**< SubMenu Language */
     QMenu *skin;                /**< SubMenu Skin */
 
+    QAction *actionBrowse;      /**< Action Browse */
     QAction *actionOpen;        /**< Action Open */
     QAction *actionSave;        /**< Action Save */
     QAction *actionExit;        /**< Action Exit */

@@ -4,6 +4,8 @@
 #include "../coral.hpp"
 #include "menubar.hpp"
 #include "view4boxes.hpp"
+#include "../modules/dicomdialog/dicomBrowser.h"
+#include "../modules/dicomdialog/previewExamen.h"
 
 MenuBar::MenuBar(QMenuBar *parent) :
     QMenuBar(parent)
@@ -14,6 +16,14 @@ MenuBar::MenuBar(QMenuBar *parent) :
 
 void MenuBar::createActions()
 {
+
+    // Open action
+    actionBrowse = new QAction(QIcon(":resources/images/open.png"), tr("&Browse"), this);
+    //actionBrowse->setShortcut(QKeySequence::Browse);
+    actionBrowse->setIconVisibleInMenu(true);
+    actionBrowse->setStatusTip(tr("Browse a directory"));
+    connect(actionBrowse, SIGNAL(triggered()), this, SLOT(slotBrowse()));
+
     // Open action
     actionOpen = new QAction(QIcon(":resources/images/open.png"), tr("&Open"), this);
     actionOpen->setShortcut(QKeySequence::Open);
@@ -81,6 +91,7 @@ void MenuBar::createActions()
 
 void MenuBar::createMenus() {
     fileMenu = addMenu(tr("&File"));
+    fileMenu->addAction(actionBrowse);
     fileMenu->addAction(actionOpen);
     fileMenu->addAction(actionSave);
     fileMenu->addSeparator();
@@ -106,23 +117,20 @@ void MenuBar::createMenus() {
     skin->addAction(actionStyle2);
 }
 
+
+void MenuBar::slotBrowse()
+{
+    DicomBrowser * dicomBrowser = new DicomBrowser(this);
+
+    dicomBrowser->show();
+}
+
+
+
 void MenuBar::slotOpen()
 {
-    QString fileName;
-
-    fileName = QFileDialog::getOpenFileName(this, tr("Open a file"),
-                                            QDir::currentPath(),
-                                            tr("All files (*.*)"));
-
-    if (fileName.isNull())
-        return;
-
-    //importFile(fileName);
-
-    // Set current directory as the last one used.
-    QFileInfo file(fileName);
-    QDir::setCurrent (file.path ());
-    Coral::instance()->window()->setWindowTitle(file.fileName());
+    PreviewExamen * previewExamen = new PreviewExamen(this);
+    previewExamen->show();
 }
 
 void MenuBar::slotSave()

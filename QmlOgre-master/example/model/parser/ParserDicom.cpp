@@ -4,10 +4,21 @@
 #include <Image3d.hpp>
 #include <GrayValue.h>
 #include <Information.h>
+#include <dcmtk/config/cfunix.h>
+#include <dcmtk/config/osconfig.h>
 
-#include <dcdeftag.h>
-#include <didocu.h>
-#include <dimo2img.h>
+#include <dcmtk/dcmimgle/dimo2img.h>
+#include <dcmtk/dcmimgle/didocu.h>
+#include <dcmtk/dcmdata/dcdeftag.h>
+#include <dcmtk/dcmdata/dcitem.h>
+
+
+#include <ParserDicom.h>
+#include <Examen.h>
+#include <ExamenParams.h>
+#include <Image3d.hpp>
+#include <GrayValue.h>
+#include <Information.h>
 
 #undef PATH_SEPARATOR
 #if defined(WIN32) || defined(_WIN32)
@@ -53,6 +64,60 @@ ParserDicom::loadExamen(DicomDir dir)
     return exams;
 }
 
+MiList<string>
+ParserDicom::getSubDir(string dir_name)
+{
+    DIR * dir = opendir(dir_name.c_str());
+    struct dirent* file;
+    MiList<string> listDir;
+    bool added = false;
+
+
+    while ((file = readdir(dir)) && !added)
+    {
+        string full_path = dir_name + PATH_SEPARATOR + string(file->d_name);
+
+        if(file->d_type == DT_REG && isValidFile(full_path))
+        {
+            listDir.add(dir_name);
+            added = true;
+        }
+
+
+        if(file->d_type == DT_DIR && strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
+        {
+
+
+            MiList<string> listSubDir = getSubDir(full_path);
+            listDir.append(listSubDir);
+
+
+        }
+
+    }
+
+
+
+    closedir(dir);
+    return listDir;
+}
+
+
+MiList<Examen*>*
+ParserDicom::loadExamen(string dir_name)
+{
+    MiList<Examen*>* exams = new MiList<Examen*>();
+    MiList<string> subdir = getSubDir(dir_name);
+    for (int i=0; i < subdir.size(); ++i)
+    {
+        exams->add(loadFile(subdir.get(i)));
+    }
+
+    return exams;
+}
+
+
+
 int
 ParserDicom::nbFiles(DIR* dir)
 {
@@ -81,6 +146,7 @@ ParserDicom::loadFile(string dirName)
 
     // Create struct examen
     Volume* img = new Volume(params->width, params->height, params->depth);
+
     Examen* exam = new Examen(img, params);
 
     // Read data
@@ -112,16 +178,20 @@ ParserDicom::loadFile(string dirName)
                 tab[i] = (float) slice[i];
             }
             img->setSlice(tab, index++);
+
+
             delete dimg;
             delete didoc;
         }
     }
+
+
     closedir(dir);
     return exam;
 }
 
 struct dirent*
-        ParserDicom::getOneFile(DIR* dir)
+ParserDicom::getOneFile(DIR* dir)
 {
     struct dirent* file;
     do {
@@ -138,6 +208,13 @@ MiList<std::string> ParserDicom::getInformations(std::string) {
 }
 
 
+
+
+
+
+
+
+
 ExamenParams*
 ParserDicom::getInfos(DIR* dir, string dirName)
 {
@@ -145,6 +222,7 @@ ParserDicom::getInfos(DIR* dir, string dirName)
     if (file == NULL) {
         return NULL;
     }
+
     string fullpath = dirName + PATH_SEPARATOR + file->d_name;
     DcmFileFormat dcm;
     OFCondition cond = dcm.loadFile(fullpath.c_str());
@@ -257,4 +335,86 @@ ParserDicom::getInfos(DIR* dir, string dirName)
     delete didoc;
 
     return params;
+}
+
+DicomPreview *
+ParserDicom::getMinimalInfo(std::string dirName)
+{
+    DIR * dir = opendir(dirName.c_str());
+    struct dirent* file = getOneFile(dir);
+    if (file == NULL) {
+        return NULL;
+    }
+
+    string fullpath = dirName + PATH_SEPARATOR + file->d_name;
+    DcmFileFormat dcm;
+    OFCondition cond = dcm.loadFile(fullpath.c_str());
+    if (cond.bad()) {
+        return NULL;
+    }
+
+    Information* generalInfos = new Information();
+    OFString s;
+    dcm.getDataset()->findAndGetOFString(DCM_PatientName, s);
+    generalInfos->addInformation("Patient name", s.c_str());
+
+
+    dcm.getDataset()->findAndGetOFString(DCM_PatientAge, s);
+    generalInfos->addInformation("Patient age", s.c_str());
+    dcm.getDataset()->findAndGetOFString(DCM_PatientSex, s);
+    generalInfos->addInformation("Patient sex", s.c_str());
+
+    dcm.getDataset()->findAndGetOFString(DCM_StudyDate, s);
+    generalInfos->addInformation("Study date", s.c_str());
+
+    dcm.getDataset()->findAndGetOFString(DCM_StudyDescription, s);
+    generalInfos->addInformation("Study description", s.c_str());
+
+
+    DiDocument* didoc = new DiDocument(fullpath.c_str());
+    DiMono2Image* dimg = new DiMono2Image(didoc, EIS_Normal);
+
+    dcm.getDataset()->findAndGetOFString(DCM_BitsStored, s);
+    int bitsStored = atoi(s.c_str());
+
+    short* data = (short*) dimg->getOutputData(0, bitsStored, 0);
+    Image<float> * img = new Image<float>((float*)data, dimg->getColumns(),dimg->getRows());
+
+
+
+    delete dimg;
+    delete didoc;
+    closedir(dir);
+
+    return new DicomPreview(generalInfos, img);
+    //return NULL;
+}
+
+
+
+
+
+DicomPreview::DicomPreview(Information * infos, Image<float> * img): minimalInfos(infos), preview(img)
+{
+
+}
+
+
+
+DicomPreview::~DicomPreview()
+{
+    delete minimalInfos;
+    delete preview;
+}
+
+Image<float> *
+DicomPreview::getPreview()
+{
+    return preview;
+}
+
+Information *
+DicomPreview::getInfos()
+{
+    return minimalInfos;
 }

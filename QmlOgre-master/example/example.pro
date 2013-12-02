@@ -4,7 +4,7 @@ QT += qml quick \
 TEMPLATE = app
 TARGET = qmlogre
 
-LIBS +=  -lqmlogre -L../lib/
+LIBS += -lqmlogre -ldcmdata -loflog -lofstd -ldcmimgle -L../lib/
 
 UI_DIR = ./.ui
 OBJECTS_DIR = ./.obj
@@ -15,16 +15,19 @@ SOURCES += main.cpp \
     cameranodeobject.cpp \
     exampleapp.cpp \
     coral.cpp \
+    model/parser/ParserDicom.cpp\
     model/Vector3d.cpp
 
 HEADERS += DebugDrawer.h \
     cameranodeobject.h \
     exampleapp.h \
     coral.h \
+    model/parser/ParserDicom.h\
     model/Vector3d.h
 
 OTHER_FILES += resources/example.qml \
-    resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d
+    resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d \
+    resources/Dicom/IM-0001-0001.dcm
 
 macx {
     OGREDIR = $$(OGRE_HOME)
@@ -165,3 +168,4 @@ include(modules/histogram/histogram.pri)
 include(modules/imageviewer/imageviewer.pri)
 include(library/QColorRampEditor/qcolorrampeditor.pri)
 include(window/window.pri)
+include(modules/dicomdialog/dicomdialog.pri)

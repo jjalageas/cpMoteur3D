@@ -3,7 +3,9 @@
 
 #include "Struct.hpp"
 
+#include <map>
 #include <string>
+
 
 
 /**
@@ -61,10 +63,12 @@ public:
          * @return la longueur de la liste d'information
          */
     int getSize();
+    std::string get(std::string);
 
 
 private:
-    MiList <Pair_t<std::string, std::string> > _informations;
+    std::map <std::string, std::string>  _informations;
+    //MiList < Pair_t<std::string, std::string>>  _informations;
 
 };
 
