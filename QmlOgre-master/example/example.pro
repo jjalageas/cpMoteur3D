@@ -4,7 +4,10 @@ QT += qml quick \
 TEMPLATE = app
 TARGET = qmlogre
 
-LIBS += -lqmlogre -ldcmdata -loflog -lofstd -ldcmimgle -L../lib/
+LIBS += -lqmlogre -ldcmdata -loflog -lofstd -ldcmimgle -L../lib/ \
+        -lpcl_registration -lpcl_sample_consensus -lpcl_features -lpcl_filters -lpcl_surface -lpcl_segmentation \
+        -lpcl_search -lpcl_kdtree -lpcl_octree -lflann_cpp -lpcl_common -lpcl_io \
+        -lpcl_visualization \
 
 UI_DIR = ./.ui
 OBJECTS_DIR = ./.obj
@@ -105,6 +108,10 @@ INCLUDEPATH += . \
                model/filters/3D \
                model/parser \
                model/utils \
+               "/usr/include/pcl-1.7/" \
+               "/usr/include/flann/" \
+               "/usr/include/eigen3/" \
+               "/usr/include/openni/" \
 
 
 
