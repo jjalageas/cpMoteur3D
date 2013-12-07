@@ -24,6 +24,7 @@
 #include "../lib/ogreengine.h"
 #include "../lib/mesh.hpp"
 
+
 class ExampleApp : public QQuickView
 {
     Q_OBJECT
@@ -39,25 +40,17 @@ public slots:
     Examen* tmpLoadData(std::string filename);
 
     void initializeModel(Examen* exam, std::string name);
-    void initializeMesh();
+    void initializeMesh(Examen* exam, std::string name);
     void initializeOgre();
-
     void initializeMask(std::string name,Mask3d* mask, std::string managerName);
     void initializeSkeleton(std::string ,Skeleton* );
     void DrawBoundingBox(Ogre::SceneNode*parent,std::string ,Volume* );
-
     void DrawCube(Ogre::SceneNode*parent,int width,int height,int depth);
-
-    //void DrawCube(Ogre::SceneNode*parent,std::string name,int width,int height,int depth);
     void DrawLine(Ogre::SceneNode*parent,const Ogre::Vector3& start, const Ogre::Vector3& stop, const Ogre::ColourValue& col);
     void DrawGrid(Ogre::SceneNode*parent,int width, int height,int depth, int step_size);
     void LoadImageIntoTexture(Ogre::SceneNode*parent,std::string name,Image<float>* imagedata);
     void DrawMultiCube();
-    void DrawMultiIcoSphere();
-    void DrawMask_3DScene(Ogre::SceneNode*parent,std::string name,Mask3d* mask);
-    void DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh);
-    void Delaunay_it(Ogre::SceneNode*parent,std::string name,Mask3d* mask);
-    Point3D_t<float>* produitVec(Point3D_t<float> A,Point3D_t<float> B,Point3D_t<float> C);
+    void DrawMultiIcoSphere();  
     void addContent();
 
 private:
