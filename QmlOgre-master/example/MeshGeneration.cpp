@@ -71,7 +71,7 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
      gp3.setSearchRadius(5);
 
      // Set typical values for the parameters
-     gp3.setMu(3);
+     gp3.setMu(1.5);
      gp3.setMaximumNearestNeighbors(10);
      gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
      gp3.setMinimumAngle(M_PI/18); // 10 degrees
@@ -89,7 +89,7 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
     // std::vector<int> parts = gp3.getPartIDs();
     // std::vector<int> states = gp3.getPointStates();
 
-     pcl::io::saveVTKFile("mesh610.vtk", triangles);
+     pcl::io::saveVTKFile("mesh669.vtk", triangles);
 
 
      // Write polygons
@@ -132,7 +132,7 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
          Vector3d* u = new Vector3d(normal.x, normal.y, normal.z);
          u->normalize();
          normal = Point3D_t<float>(u->x, u->y, u->z);
-         cout << triangles.polygons[i].vertices[j]*3 << endl;
+         cout << triangles.polygons.size() << endl;
          std::string name = boost::lexical_cast<string>(i);
 
          //  mesh->setnormal(triangles.polygons[i].vertices[j]*3, normal.x);
@@ -396,5 +396,67 @@ void MeshGeneration::DrawTriangle(Point3D_t<float> p1,Point3D_t<float> p2,Point3
         lEntity->setMaterialName("text");
         Ogre::SceneNode* lNode = scene->getRootSceneNode()->createChildSceneNode();
         lNode->attachObject(lEntity);
+
+}
+
+
+
+
+/*void MeshGeneration::CreateMeshManualLODLevel(char *mesh_name, double lod_distance, char *lod_mesh_name, )
+{
+   Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().getByName(mesh_name);
+   mesh->createManualLodLevel(lod_distance, lod_mesh_name);
+
+
+}*/
+
+
+
+void MeshGeneration::DrawPointcloud(std::string name, const std::string resourcegroup, const int numpoints, float *parray, Ogre::SceneNode*parent, Ogre::SceneManager* scene)
+{
+
+   Ogre::MeshPtr msh = Ogre::MeshManager::getSingleton().createManual(name, resourcegroup);
+   Ogre::SubMesh* sub = msh->createSubMesh();
+
+
+   msh->sharedVertexData = new Ogre::VertexData();
+   msh->sharedVertexData->vertexCount = numpoints;
+
+
+   Ogre::VertexDeclaration* decl = msh->sharedVertexData->vertexDeclaration;
+   decl->addElement(0, 0, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
+   Ogre::HardwareVertexBufferSharedPtr vbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(
+               decl->getVertexSize(0), msh->sharedVertexData->vertexCount, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+
+   vbuf->writeData(0, vbuf->getSizeInBytes(), parray, true);
+
+   decl->addElement(1, 0, Ogre::VET_COLOUR, Ogre::VES_DIFFUSE);
+   Ogre::HardwareVertexBufferSharedPtr cbuf = Ogre::HardwareBufferManager::getSingleton().createVertexBuffer(Ogre::VertexElement::getTypeSize(Ogre::VET_COLOUR),
+                                                                         msh->sharedVertexData->vertexCount, Ogre::HardwareBuffer::HBU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+
+   Ogre::RenderSystem* rs = Ogre::Root::getSingleton().getRenderSystem();
+   Ogre::RGBA *colours = new Ogre::RGBA[numpoints];
+   for(int i=0, k=0; i<numpoints*3, k<numpoints; i+=3, k++){
+       rs->convertColourValue(Ogre::ColourValue(0.5f, 0.0f, 0.0f, 1.0f), &colours[k]);
+   }
+
+   cbuf->writeData(0, cbuf->getSizeInBytes(), colours, true);
+   delete[] colours;
+
+   Ogre::VertexBufferBinding* bind = msh->sharedVertexData->vertexBufferBinding;
+   bind->setBinding(0, vbuf);
+   bind->setBinding(1, cbuf);
+   sub->useSharedVertices = true;
+   sub->operationType = Ogre::RenderOperation::OT_POINT_LIST;
+   msh->load();
+
+   Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().create(
+               "Test/ColourTest", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+   material->getTechnique(0)->getPass(0)->setVertexColourTracking(Ogre::TVC_AMBIENT);
+   Ogre::Entity* thisEntity = scene->createEntity(name, name);
+   thisEntity->setMaterialName("Test/ColourTest");
+   Ogre::SceneNode* thisSceneNode = parent->createChildSceneNode();
+   thisSceneNode->setPosition(-35, 0, 0);
+   thisSceneNode->attachObject(thisEntity);
 
 }
