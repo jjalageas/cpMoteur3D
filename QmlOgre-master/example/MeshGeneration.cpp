@@ -68,29 +68,62 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
      pcl::PolygonMesh triangles;
 
      // Set the maximum distance between connected points (maximum edge length)
-     gp3.setSearchRadius(5);
+     gp3.setSearchRadius(100);
 
      // Set typical values for the parameters
-     gp3.setMu(1.5);
+     gp3.setMu(10);
      gp3.setMaximumNearestNeighbors(10);
-     gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
-     gp3.setMinimumAngle(M_PI/18); // 10 degrees
-     gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
-     gp3.setNormalConsistency(true);
+     gp3.setMaximumSurfaceAngle(M_PI); // 45 degrees
+     gp3.setMinimumAngle(M_PI/9); // 10 degrees
+     gp3.setMaximumAngle(2*M_PI); // 120 degrees
+     gp3.setNormalConsistency(false);
 
      // Get result
      gp3.setInputCloud (cloud_with_normals);
      gp3.setSearchMethod (tree2);
      gp3.reconstruct (triangles);
+     //triangles.polygons.resize(triangles.size()/3);
+
+     //Additional vertex information
+     //std::vector<int> parts = gp3.getPartIDs();
+     //std::vector<int> states = gp3.getPointStates();
+
+     pcl::io::saveVTKFile("mesh111.vtk", triangles);
+
+    // int numberOfVeticesAfterPCL = triangles.cloud.height * triangles.cloud.width;
+    // mesh->createTabVertices(numberOfVeticesAfterPCL);
+    // mesh->setNbVertice(numberOfVeticesAfterPCL);
 
 
+     unsigned int nr_points = triangles.cloud.width * triangles.cloud.height;
+     unsigned int point_size = static_cast<unsigned int> (triangles.cloud.data.size () / nr_points);
+     for (unsigned int i = 0; i < nr_points; ++i)
+     {
+         int xyz = 0;
+         cout << i << ": " << endl;
+         for (size_t d = 0; d < triangles.cloud.fields.size (); ++d)
+         {
+             int count = triangles.cloud.fields[d].count;
+             if (count == 0)
+                 count = 1;
+             int c = 0;
+             if ((triangles.cloud.fields[d].datatype == pcl::PCLPointField::FLOAT32) && (
+                         triangles.cloud.fields[d].name == "x" ||
+                         triangles.cloud.fields[d].name == "y" ||
+                         triangles.cloud.fields[d].name == "z"))
+             {
+                 float value;
+                 memcpy (&value, &triangles.cloud.data[i * point_size + triangles.cloud.fields[d].offset + c * sizeof (float)], sizeof (float));
+                 cout << value;
+                 mesh->setvertice(i+d, value);
+                 if (++xyz == 3)
+                     break;
+             }
+             cout << " ";
+         }
 
-     // Additional vertex information
-    // std::vector<int> parts = gp3.getPartIDs();
-    // std::vector<int> states = gp3.getPointStates();
-
-     pcl::io::saveVTKFile("mesh669.vtk", triangles);
-
+         cout << std::endl;
+     }
 
      // Write polygons
      // compute the correct number of values:
@@ -100,23 +133,22 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
          correct_number += triangles.polygons[i].vertices.size ();
 
      cout << "\nPOLYGONS " << triangle_size << " " << correct_number << std::endl;
-     // mesh->createTabFace(6880);
-     //  mesh->createTabNormals(mesh->getNbVertice()+1);
 
-
-
+  /*   Point3D_t<float> faceTab[triangle_size*3];
+     Point3D_t<float> normalTab[triangle_size*3];
+     mesh->setNbFace(triangle_size);
      for (size_t i = 0; i < triangle_size; ++i)
      {
-       cout << triangles.polygons[i].vertices.size () << " ";
+      // cout << triangles.polygons[i].vertices.size () << " ";
        size_t j = 0;
        int indiceVertex0;
        int indiceVertex2;
        int indiceVertex3;
        for (j = 0; j < triangles.polygons[i].vertices.size () - 1; j+=3){
-         cout << triangles.polygons[i].vertices[j] <<" ";
-         cout << triangles.polygons[i].vertices[j+1] <<" ";
-         cout << triangles.polygons[i].vertices[j+2] <<" ";
-         cout << std::endl;
+        // cout << triangles.polygons[i].vertices[j] <<" ";
+        // cout << triangles.polygons[i].vertices[j+1] <<" ";
+       //  cout << triangles.polygons[i].vertices[j+2] <<" ";
+        // cout << std::endl;
 
          indiceVertex0 = triangles.polygons[i].vertices[j];
          indiceVertex2 = triangles.polygons[i].vertices[j+1];
@@ -132,7 +164,11 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
          Vector3d* u = new Vector3d(normal.x, normal.y, normal.z);
          u->normalize();
          normal = Point3D_t<float>(u->x, u->y, u->z);
-         cout << triangles.polygons.size() << endl;
+         normalTab[i] = normal;
+         faceTab[i*3] = pt1;
+         faceTab[i*3+1] = pt2;
+         faceTab[i*3+2] = pt13;
+        // cout << triangles.polygons.size() << endl;
          std::string name = boost::lexical_cast<string>(i);
 
          //  mesh->setnormal(triangles.polygons[i].vertices[j]*3, normal.x);
@@ -145,12 +181,70 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
 
      }
 
+
+     Point3D_t<float> normalMoy[nbpts];
+
+     for(int i = 0; i < numberOfVeticesAfterPCL*3; i+=3){
+         std::vector< Point3D_t<float>* > adj;
+         for(int j=0; j < faceTab.size(); j++){
+             if(mesh->getVerticeValue(i) == faceTab[j].x &&  mesh->getVerticeValue(i+1) == faceTab[j].y &&  mesh->getVerticeValue(i+2) == faceTab[j].z){
+                 adj.push_back(normalTab[(int)(j/3)]);
+             }
+         }
+
+         Point3D_t<float> pnorm;
+         pnorm.x =0;
+         pnorm.y =0;
+         pnorm.z =0;
+
+         if(adj.size() > 0){
+             for(int k=0; k<adj.size(); k++){
+
+                 pnorm.x += adj[k]->x;
+                 pnorm.y += adj[k]->y;
+                 pnorm.z += adj[k]->z;
+             }
+
+             pnorm.x = pnorm.x / adj.size();
+             pnorm.y = pnorm.y / adj.size();
+             pnorm.z = pnorm.z / adj.size();
+
+             normalMoy[i/3].x = pnorm.x;
+             normalMoy[i/3].y = pnorm.y;
+             normalMoy[i/3].z = pnorm.z;
+         }
+
+         else{
+             normalMoy[i/3].x = 0;
+             normalMoy[i/3].y = 0;
+             normalMoy[i/3].z = 0;
+         }
+     }
+
+     mesh->createTabNormals(numberOfVeticesAfterPCL);
+     mesh->createTabColours(numberOfVeticesAfterPCL);
+
+     for(int i=0; i< nbpts*3; i+=3){
+         mesh->setnormal(i,normalMoy[i/3].x);
+         mesh->setnormal(i+1,normalMoy[i/3].y);
+         mesh->setnormal(i+2,normalMoy[i/3].z);
+
+         if(i%2 == 0)
+             mesh->setcolour(i, 1.0);
+         else mesh->setcolour(i,0.0);
+
+     }
+
      // for(int i=0; i<mesh->getNbVertice()*3; i++){
      //  if(mesh->getNormaleValue(i)>1 && mesh->getNormaleValue(i)<0)
      //     mesh->setnormal(i, 0);
 
 
-     //  DrawMesh_3DScene(parent, "mesh", mesh);
+     //  DrawMesh_3DScene(parent, "mesh", mesh);*/
+
+
+     Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
+     parent->createChildSceneNode()->attachObject(lManualObject);
 
 }
 
@@ -460,3 +554,129 @@ void MeshGeneration::DrawPointcloud(std::string name, const std::string resource
    thisSceneNode->attachObject(thisEntity);
 
 }
+
+void MeshGeneration::DrawMeshLstPoint(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene){
+    Ogre::ManualObject* manual = scene->createManualObject(name);
+    manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_POINT_LIST);
+
+    for(int i=0;i<mesh->getNbVertice()*3;++i){
+        manual->position(mesh->getVerticeValue(i),mesh->getVerticeValue(i+1) ,mesh->getVerticeValue(i+2));
+    }
+
+
+    manual->end();
+    parent->createChildSceneNode()->attachObject(manual);
+}
+
+void MeshGeneration::DrawMeshStripLine(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene){
+    Ogre::ManualObject* manual = scene->createManualObject(name);
+    manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+
+    for(int i=0;i<mesh->getNbVertice()*3;++i){
+        manual->position(mesh->getVerticeValue(i),mesh->getVerticeValue(i+1) ,mesh->getVerticeValue(i+2));
+    }
+
+    manual->end();
+    parent->createChildSceneNode()->attachObject(manual);
+}
+
+void MeshGeneration::DrawMeshStripTriangle(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene){
+
+    Ogre::ManualObject* manual = scene->createManualObject(name);
+    manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
+
+    // define vertex position of index 0..3
+    manual->position(-100.0, -100.0, 0.0);
+    manual->position( 100.0, -100.0, 0.0);
+    manual->position( 100.0,  100.0, 0.0);
+    manual->position(-100.0,  100.0, 0.0);
+
+    // define usage of vertices by refering to the indexes
+    manual->index(0);
+    manual->index(1);
+    manual->index(2);
+    manual->index(3);
+    manual->index(0);
+
+    manual->end();
+    parent->createChildSceneNode()->attachObject(manual);
+}
+
+void MeshGeneration::DrawMeshFanTriangle(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene){
+    Ogre::ManualObject* manual = scene->createManualObject(name);
+    manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_FAN);
+
+
+
+    manual->end();
+    parent->createChildSceneNode()->attachObject(manual);
+}
+
+void MeshGeneration::DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh,int type, Ogre::SceneManager* scene){
+    switch(type){
+    case 0://list of point
+        DrawMeshLstPoint(parent,name, mesh, scene);
+        break;
+    case 1://list of strip line
+        DrawMeshStripLine(parent,name, mesh, scene);
+        break;
+    case 2://list of strip triangle
+        DrawMeshStripTriangle(parent,name, mesh, scene);
+        break;
+    case 3://list of fan triangle
+        DrawMeshFanTriangle(parent,name, mesh, scene);
+        break;
+    }
+
+}
+
+
+Ogre::ManualObject* MeshGeneration::CreateMesh(pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene)
+{
+    pcl::PointCloud<pcl::PointNormal>::Ptr input_cloud = inputCloud;
+
+    size_t vertexcount = input_cloud->points.size();
+    size_t indicescount = 0;
+
+    // estimation for the index count is triangle_size*3*2 and it is always larger than the real value
+    // Calculate real value for indices
+    for (size_t i = 0; i < inputMesh.polygons.size(); i++)
+                indicescount += inputMesh.polygons[i].vertices.size();
+
+    Ogre::ManualObject *ogreManual = scene->createManualObject("CapturedObject");
+    ogreManual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+
+
+    if (indicescount > 0)
+    {
+        for (size_t i = 0; i < input_cloud->points.size(); i++)
+        {
+            ogreManual->position(input_cloud->points[i].x, input_cloud->points[i].y, input_cloud->points[i].z);
+
+           // Ogre::Real r = (Ogre::Real)input_cloud->points[i].r / (Ogre::Real)255;
+           // Ogre::Real g = (Ogre::Real)input_cloud->points[i].g / (Ogre::Real)255;
+           // Ogre::Real b = (Ogre::Real)input_cloud->points[i].b / (Ogre::Real)255;
+           // ogreManual->colour(r, g, b);
+
+            ogreManual->normal(input_cloud->points[i].data_c[0], input_cloud->points[i].data_c[1], input_cloud->points[i].data_c[2]);
+        }
+
+        //Add indexing data to the manualobject
+        for (size_t i = 0; i < inputMesh.polygons.size(); i++)
+        {
+            for (size_t j = 0; j < inputMesh.polygons[i].vertices.size(); j++)
+            {
+                int index = inputMesh.polygons[i].vertices[j];
+                ogreManual->index(index);
+            }
+        }
+        ogreManual->end();
+
+        return ogreManual;
+    }
+
+
+}
+
+
+

@@ -10,6 +10,12 @@
 #include <QtQuick/QQuickView>
 #include <DebugDrawer.h>
 #include <cameranodeobject.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
+#include <pcl/io/vtk_io.h>
 
 #include "../example/cameranodeobject.h"
 #include "../lib/ogreitem.h"
@@ -28,6 +34,12 @@ public:
     static Point3D_t<float> produitVec(Point3D_t<float> A,Point3D_t<float> B,Point3D_t<float> C);
     static void CreateMeshManualLODLevel(char *mesh_name, double lod_distance, char *lod_mesh_name);
     static void DrawPointcloud(std::string name, const std::string resourcegroup, const int numpoints, float *parray, Ogre::SceneNode*parent, Ogre::SceneManager* scene);
+    static void DrawMeshLstPoint(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene);
+    static void DrawMeshStripLine(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene);
+    static void DrawMeshStripTriangle(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene);
+    static void DrawMeshFanTriangle(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene);
+    static void DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh,int type, Ogre::SceneManager* scene);
+    static Ogre::ManualObject* CreateMesh(pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene);
 
 };
 

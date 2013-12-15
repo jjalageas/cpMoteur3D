@@ -104,8 +104,6 @@ public:
         _vertice = new float[3*_nbVertice];
 
         int indexV=0;
-       // int indexN = 0;
-       // const float sqrt13 = 0.577350269f;
 
         //test1
         _minX=_minY=_minZ=__INT32_MAX__;
@@ -163,10 +161,14 @@ public:
     void createTabFace(int nbelement){_nbFace=nbelement;_sizeFace=nbelement*3;_face=new unsigned short[_sizeFace];}
     void createTabNormals(int nbelement){_normals=new float[nbelement*3];}
     void createTabColours(int nbelement){_colour=new float[nbelement*3];}
+    void createTabVertices(int nbelement){_vertice=new float[nbelement*3];}
 
     void setface(int s1,int s2,int s3,int index){_face[index]=s1;_face[index+1]=s2;_face[index+2]=s3;}
-    void setnormal(int index,int val){_normals[index]=val;}
-    void setcolour(int index,int val){_colour[index]=val;}
+    void setnormal(int index,float val){_normals[index]=val;}
+    void setcolour(int index,float val){_colour[index]=val;}
+    void setvertice(int index, float val){_vertice[index]=val;}
+    void setNbVertice(int val){_nbVertice = val;}
+    void setNbFace(int val){_nbFace = val;}
 
 
     void displayParameter(){
@@ -230,18 +232,23 @@ public:
         _nbFace=12;
         _sizeFace=36;
 
-        _face=new unsigned short[36];
+       _face=new unsigned short[36];
 
         _face[0]=0; _face[1]=2; _face[2]=3;
         _face[3]=0;_face[4]=1;_face[5]=2;
         _face[6]=1;_face[7]=6;_face[8]=2;
         _face[9]=1;_face[10]=5;_face[11]=6;
+
         _face[12]=4;_face[13]=6;_face[14]=5;
+
         _face[15]=4;_face[16]=7;_face[17]=6;
         _face[18]= 0;_face[19]=7;_face[20]=4;
         _face[21]=0;_face[22]=3;_face[23]=7;
         _face[24]=0;_face[25]=5;_face[26]=1;
+
         _face[27]=0;_face[28]=4;_face[29]=5;
+
+
         _face[30]=2;_face[31]=7;_face[32]=3;
         _face[33]=2;_face[34]=6;_face[35]=7;
 
@@ -250,7 +257,9 @@ public:
 
 
 
-private:
+
+
+
 
     float* _vertice;
     int _nbVertice;

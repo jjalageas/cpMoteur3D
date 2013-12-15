@@ -100,9 +100,12 @@ void ExampleApp::initializeModel(Examen* exam, std::string name)
 
     //récupère le mask 3D (nuage de point)
     Mask3d* mask=exam->getMask();
-
+    Mesh* mesh = new Mesh(mask);
+    MeshGeneration::DrawMeshStripLine(NodeRoot,name,mesh, m_sceneManager);
+    //mask->TransformMapIntoListIndex1D(1);
     //dessine le nuage de point
-    initializeMask("mask", mask, name);
+   // MeshGeneration::DrawPointcloud("mask", "General" , 123381, mask->TransformMapIntoListIndex1D_bis(1), NodeRoot, m_sceneManager);
+   // initializeMask("mask", mask, name);
 }
 
 
