@@ -4,10 +4,13 @@ QT += qml quick \
 TEMPLATE = app
 TARGET = qmlogre
 
-LIBS += -lqmlogre -ldcmdata -loflog -lofstd -ldcmimgle -L../lib/ \
+LIBS += -lboost_system -lqmlogre -L../lib/ -L../../../../../../Downloads/oomph-lib-0.90 \
         -lpcl_registration -lpcl_sample_consensus -lpcl_features -lpcl_filters -lpcl_surface -lpcl_segmentation \
         -lpcl_search -lpcl_kdtree -lpcl_octree -lflann_cpp -lpcl_common -lpcl_io \
         -lpcl_visualization \
+        -lvtkCommon \
+        -lvtkGraphics \
+        -lvtkFiltering \
 
 UI_DIR = ./.ui
 OBJECTS_DIR = ./.obj
@@ -18,19 +21,18 @@ SOURCES += main.cpp \
     cameranodeobject.cpp \
     exampleapp.cpp \
     coral.cpp \
-    model/parser/ParserDicom.cpp\
-    model/Vector3d.cpp
+    model/Vector3d.cpp \
+    MeshGeneration.cpp
 
 HEADERS += DebugDrawer.h \
     cameranodeobject.h \
     exampleapp.h \
     coral.h \
-    model/parser/ParserDicom.h\
-    model/Vector3d.h
+    model/Vector3d.h \
+    MeshGeneration.hpp
 
 OTHER_FILES += resources/example.qml \
-    resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d \
-    resources/Dicom/IM-0001-0001.dcm
+    resources/Campan_MethodeHB_Seuil_970_Plus60_thinning_sliceBranchePropre2.bmi3d
 
 macx {
     OGREDIR = $$(OGRE_HOME)
@@ -112,6 +114,10 @@ INCLUDEPATH += . \
                "/usr/include/flann/" \
                "/usr/include/eigen3/" \
                "/usr/include/openni/" \
+               "/usr/include/vtk-5.8/" \
+               "usr/lib/libvtkCommon.so.5.8/" \
+               "../../../../../../libmesh/include/libmesh" \
+               "../../../../../../Downloads/oomph-lib-0.90" \
 
 
 
@@ -175,4 +181,3 @@ include(modules/histogram/histogram.pri)
 include(modules/imageviewer/imageviewer.pri)
 include(library/QColorRampEditor/qcolorrampeditor.pri)
 include(window/window.pri)
-include(modules/dicomdialog/dicomdialog.pri)
