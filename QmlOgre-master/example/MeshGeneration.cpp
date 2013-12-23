@@ -6,6 +6,7 @@
 #include <QtQml/QQmlContext>
 #include <QDir>
 #include <QDebug>
+#include <OgreMath.h>
 #include "../lib/mesh.hpp"
 #include "../lib/tetgen.h"
 #include <pcl/point_types.h>
@@ -14,79 +15,117 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
 #include <pcl/io/vtk_io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/console/parse.h>
+#include <pcl/surface/concave_hull.h>
+#include <pcl/surface/simplification_remove_unused_vertices.h>
+#include <pcl/surface/vtk_smoothing/vtk_mesh_smoothing_laplacian.h>
+#include <pcl/surface/vtk_smoothing/vtk_utils.h>
+#include <vtkSmartPointer.h>
+#include <vtkSmoothPolyDataFilter.h>
 #include <boost/lexical_cast.hpp>
 
 
-
-void MeshGeneration::Point_clouds(Ogre::SceneNode*parent, std::string name, Mask3d* mask, Ogre::SceneManager* scene){
+/*Code inspired by PCL tutorials from http://pointclouds.org/documentation/tutorials/greedy_projection.php#greedy-triangulation*/
+void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene){
 
     Mesh* mesh = new Mesh(mask);
 
     pcl::PointCloud<pcl::PointXYZ> cloud_strt;
 
-     // Fill in the cloud data
-     cloud_strt.width    = mesh->getWidth();
-     cloud_strt.height   = mesh->getHeight();
-     cloud_strt.is_dense = false;
-     cloud_strt.points.resize (cloud_strt.width * cloud_strt.height);
+    // Fill in the cloud data
+    cloud_strt.width    = mesh->getWidth();
+    cloud_strt.height   = mesh->getHeight();
+    cloud_strt.is_dense = false;
+    cloud_strt.points.resize (cloud_strt.width * cloud_strt.height);
 
-     for (size_t i = 0; i < cloud_strt.points.size (); ++i)
-       {
-         cloud_strt.points[i].x = mesh->getVerticeValue(i*3);
-         cloud_strt.points[i].y = mesh->getVerticeValue(i*3+1);
-         cloud_strt.points[i].z = mesh->getVerticeValue(i*3+2);
-       }
+    for (size_t i = 0; i < cloud_strt.points.size (); ++i)
+    {
+        cloud_strt.points[i].x = mesh->getVerticeValue(i*3);
+        cloud_strt.points[i].y = mesh->getVerticeValue(i*3+1);
+        cloud_strt.points[i].z = mesh->getVerticeValue(i*3+2);
+    }
 
-     pcl::io::savePCDFileASCII ("test_pcd.pcd", cloud_strt);
+    pcl::io::savePCDFileASCII ("test_pcd.pcd", cloud_strt);
 
-     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-     pcl::PCLPointCloud2 cloud_blob;
-     pcl::io::loadPCDFile ("test_pcd.pcd", cloud_blob);
-     pcl::fromPCLPointCloud2 (cloud_blob, *cloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 cloud_blob;
+    pcl::io::loadPCDFile ("test_pcd.pcd", cloud_blob);
+    pcl::fromPCLPointCloud2 (cloud_blob, *cloud);
 
-     pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
-     pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
-     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-     tree->setInputCloud (cloud);
-     n.setInputCloud (cloud);
-     n.setSearchMethod (tree);
-     n.setKSearch (20);
-     n.compute (*normals);
-     //* normals should not contain the point normals + surface curvatures
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud (cloud);
+    n.setInputCloud (cloud);
+    n.setSearchMethod (tree);
+    n.setKSearch (20);
+    n.compute (*normals);
+    //* normals should not contain the point normals + surface curvatures
 
-     // Concatenate the XYZ and normal fields*
-     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
-     pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
-     //* cloud_with_normals = cloud + normals
+    // Concatenate the XYZ and normal fields*
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
+    //* cloud_with_normals = cloud + normals
 
-     // Create search tree*
-     pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
-     tree2->setInputCloud (cloud_with_normals);
+    // Create search tree*
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud (cloud_with_normals);
 
-     // Initialize objects
-     pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
-     pcl::PolygonMesh triangles;
+    // Initialize objects
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
 
-     // Set the maximum distance between connected points (maximum edge length)
-     gp3.setSearchRadius(5);
+    // Set the maximum distance between connected points (maximum edge length)
+    gp3.setSearchRadius(50);
 
-     // Set typical values for the parameters
-     gp3.setMu(1.5);
-     gp3.setMaximumNearestNeighbors(10);
-     gp3.setMaximumSurfaceAngle(M_PI); // 45 degrees
-     gp3.setMinimumAngle(M_PI/9); // 10 degrees
-     gp3.setMaximumAngle(2*M_PI); // 120 degrees
-     gp3.setNormalConsistency(false);
+    // Set typical values for the parameters
+    gp3.setMu(3);
+    gp3.setMaximumNearestNeighbors(50);
+    gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
+    gp3.setMinimumAngle(M_PI/18); // 10 degrees
+    gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
+    gp3.setNormalConsistency(false);
 
-     // Get result
-     gp3.setInputCloud (cloud_with_normals);
-     gp3.setSearchMethod (tree2);
-     gp3.reconstruct (triangles);
+    // Get result
+    gp3.setInputCloud (cloud_with_normals);
+    gp3.setSearchMethod (tree2);
+    gp3.reconstruct (triangles);
 
-     pcl::io::saveVTKFile("mesh111.vtk", triangles);
+    pcl::io::saveVTKFile("mesh119.vtk", triangles);
+    MeshGeneration::meshSmoothing(parent, name, triangles, cloud_with_normals, scene);
+    //pcl::PolygonMesh simplifiedOutput;
+    //pcl::surface::SimplificationRemoveUnusedVertices ps;
+    //ps.simplify(triangles, simplifiedOutput);
+    //gp3.reconstruct(simplifiedOutput);
 
-     Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
-     parent->createChildSceneNode()->attachObject(lManualObject);
+    //cout << "triangles size: " << triangles.cloud.width * triangles.cloud.height << endl;
+    //cout << "simplified size: " << simplifiedOutput.cloud.width * simplifiedOutput.cloud.height << endl;
+
+    //Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
+    //parent->createChildSceneNode()->attachObject(lManualObject);
+
+
+}
+
+
+
+
+void MeshGeneration::meshSmoothing(Ogre::SceneNode*parent,std::string name, pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene){
+
+    pcl::MeshSmoothingLaplacianVTK vtk;
+    vtk.setInputMesh(inputMesh);
+    vtk.setNumIter(20000);
+    vtk.setConvergence(0.0001);
+    vtk.setRelaxationFactor(0.0001);
+    vtk.setFeatureEdgeSmoothing(true);
+    vtk.setFeatureAngle(M_PI/5);
+    vtk.setBoundarySmoothing(true);
+    vtk.process(inputMesh);
+
+    Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(inputMesh, inputCloud, scene);
+    parent->createChildSceneNode()->attachObject(lManualObject);
 
 }
 
@@ -112,29 +151,32 @@ Vector3d& normal(struct::Point3D_t<float> p1, struct::Point3D_t<float> p2, struc
 
 void MeshGeneration::DrawMask_3DScene(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene){
 
-    Ogre::SceneNode* NodeMask = parent->createChildSceneNode();
-    Ogre::ManualObject* m_ManualObject=scene->createManualObject(name);
-    int width=mask->getWidth();
-    int height=mask->getHeight();
-    int depth=mask->getDepth();
-    m_ManualObject->setDynamic(true);
-    m_ManualObject->begin("BaseWhiteNoLighting",Ogre::RenderOperation::OT_POINT_LIST);
+    Mesh* mesh = new Mesh(mask);
 
-    for(int k=0;k<depth;++k){
-        for(int j=0;j<height;++j){
-            for(int i=0;i<width;++i){
-                if(mask->get(i, j, k)){
-                    //std::cout<<"position ("<<i<<","<<j<<","<<k<<")="<<mask->get(i, j, k)<<std::endl;
-                    m_ManualObject->position(i, j, k);
-                    // m_ManualObject->normal(nx, ny, nz);
-                    m_ManualObject->colour(Ogre::ColourValue(0.5f, 0.0f, 0.0f, 1.0f));
-                }
-            }
-        }
+    pcl::PointCloud<pcl::PointXYZ> cloud_strt;
 
+    // Fill in the cloud data
+    cloud_strt.width    = mesh->getWidth();
+    cloud_strt.height   = mesh->getHeight();
+    cloud_strt.is_dense = false;
+    cloud_strt.points.resize (cloud_strt.width * cloud_strt.height);
+
+    for (size_t i = 0; i < cloud_strt.points.size (); ++i)
+    {
+        cloud_strt.points[i].x = mesh->getVerticeValue(i*3);
+        cloud_strt.points[i].y = mesh->getVerticeValue(i*3+1);
+        cloud_strt.points[i].z = mesh->getVerticeValue(i*3+2);
     }
-    m_ManualObject->end();
-    NodeMask->attachObject(m_ManualObject);
+
+    pcl::io::savePCDFileASCII ("test_pcd.pcd", cloud_strt);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 cloud_blob;
+    pcl::io::loadPCDFile ("test_pcd.pcd", cloud_blob);
+    pcl::fromPCLPointCloud2 (cloud_blob, *cloud);
+
+    Ogre::ManualObject* lManualObject = CreatePointMesh(cloud, "pointCloud", scene);
+    parent->createChildSceneNode()->attachObject(lManualObject);
 
 }
 
@@ -473,6 +515,22 @@ void MeshGeneration::DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Me
 }
 
 
+/*Following three methods taken from https://github.com/Chiru/ChiruAddons/blob/master/ObjectCaptureModule/MeshReconstructor/MeshConverter.cpp*/
+Ogre::ManualObject* MeshGeneration::createManualObject(size_t vertexCount, size_t indicesCount, std::string materialName, Ogre::RenderOperation::OperationType operationType, Ogre::SceneManager* scene)
+{
+    Ogre::ManualObject *ogreManual = scene->createManualObject("ImportedMesh");
+
+    ogreManual->clear();
+    ogreManual->estimateVertexCount(vertexCount);
+    ogreManual->estimateIndexCount(indicesCount);
+    ogreManual->begin(materialName, operationType);
+    ogreManual->setDynamic(true);
+
+    return ogreManual;
+}
+
+
+
 Ogre::ManualObject* MeshGeneration::CreateMesh(pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene)
 {
     pcl::PointCloud<pcl::PointNormal>::Ptr input_cloud = inputCloud;
@@ -480,13 +538,10 @@ Ogre::ManualObject* MeshGeneration::CreateMesh(pcl::PolygonMesh inputMesh, pcl::
     size_t vertexcount = input_cloud->points.size();
     size_t indicescount = 0;
 
-    // estimation for the index count is triangle_size*3*2 and it is always larger than the real value
-    // Calculate real value for indices
     for (size_t i = 0; i < inputMesh.polygons.size(); i++)
                 indicescount += inputMesh.polygons[i].vertices.size();
 
-    Ogre::ManualObject *ogreManual = scene->createManualObject("CapturedObject");
-    ogreManual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_LIST);
+    Ogre::ManualObject *ogreManual = createManualObject(vertexcount, indicescount, "CapturedObject", Ogre::RenderOperation::OT_TRIANGLE_LIST, scene);
 
 
     if (indicescount > 0)
@@ -495,15 +550,14 @@ Ogre::ManualObject* MeshGeneration::CreateMesh(pcl::PolygonMesh inputMesh, pcl::
         {
             ogreManual->position(input_cloud->points[i].x, input_cloud->points[i].y, input_cloud->points[i].z);
 
-           // Ogre::Real r = (Ogre::Real)input_cloud->points[i].r / (Ogre::Real)255;
-           // Ogre::Real g = (Ogre::Real)input_cloud->points[i].g / (Ogre::Real)255;
-           // Ogre::Real b = (Ogre::Real)input_cloud->points[i].b / (Ogre::Real)255;
-           // ogreManual->colour(r, g, b);
+            Ogre::Real r = rand() % 255;
+            Ogre::Real g = rand() % 255;
+            Ogre::Real b = rand() % 255;
+            ogreManual->colour(r, g, b);
 
             ogreManual->normal(input_cloud->points[i].data_c[0], input_cloud->points[i].data_c[1], input_cloud->points[i].data_c[2]);
         }
 
-        //Add indexing data to the manualobject
         for (size_t i = 0; i < inputMesh.polygons.size(); i++)
         {
             for (size_t j = 0; j < inputMesh.polygons[i].vertices.size(); j++)
@@ -521,4 +575,104 @@ Ogre::ManualObject* MeshGeneration::CreateMesh(pcl::PolygonMesh inputMesh, pcl::
 }
 
 
+Ogre::ManualObject* MeshGeneration::CreatePointMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string materialName, Ogre::SceneManager* scene)
+{
+    size_t vertexcount = cloud->points.size();
 
+    Ogre::ManualObject *ogreManual = createManualObject(vertexcount, vertexcount, materialName, Ogre::RenderOperation::OT_POINT_LIST, scene);
+
+    for (size_t i = 0; i < cloud->points.size(); i++)
+    {
+        ogreManual->position(cloud->points[i].x, cloud->points[i].y, cloud->points[i].z);
+        ogreManual->colour(Ogre::ColourValue(0.5f, 0.0f, 0.0f, 1.0f));
+        ogreManual->index(i);
+    }
+
+    ogreManual->end();
+
+    return ogreManual;
+}
+
+
+Mesh* MeshGeneration::MeshSimplification(Mask3d* mask){
+
+    Mesh* mesh = new Mesh(mask);
+    int newNbVertice = mesh->getNbVertice()/8;
+    float* newTabVertice=new float[newNbVertice*3];
+
+    for(int i=0; i<newNbVertice*3; i+=3){
+        newTabVertice[i]=mesh->getVerticeValue(i*8);
+        newTabVertice[i+1]=mesh->getVerticeValue(i*8+1);
+        newTabVertice[i+2]=mesh->getVerticeValue(i*8+2);
+    }
+
+    mesh->setNbVertice(newNbVertice);
+    mesh->setTabVertices(newTabVertice);
+
+    return mesh;
+}
+
+
+
+void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene){
+
+    Mesh* mesh = MeshGeneration::MeshSimplification(mask);
+    cout << mesh->getNbVertice() << endl;
+
+    pcl::PointCloud<pcl::PointXYZ> cloud_strt;
+
+    cloud_strt.width    = mesh->getWidth();
+    cloud_strt.height   = mesh->getHeight();
+    cloud_strt.is_dense = false;
+    cloud_strt.points.resize (cloud_strt.width * cloud_strt.height);
+
+    for (size_t i = 0; i < cloud_strt.points.size (); ++i)
+    {
+        cloud_strt.points[i].x = mesh->getVerticeValue(i*3);
+        cloud_strt.points[i].y = mesh->getVerticeValue(i*3+1);
+        cloud_strt.points[i].z = mesh->getVerticeValue(i*3+2);
+    }
+
+    pcl::io::savePCDFileASCII ("test_pcd.pcd", cloud_strt);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 cloud_blob;
+    pcl::io::loadPCDFile ("test_pcd.pcd", cloud_blob);
+    pcl::fromPCLPointCloud2 (cloud_blob, *cloud);
+
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud (cloud);
+    n.setInputCloud (cloud);
+    n.setSearchMethod (tree);
+    n.setKSearch (20);
+    n.compute (*normals);
+
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
+
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud (cloud_with_normals);
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
+
+    gp3.setSearchRadius(50);
+
+    gp3.setMu(3);
+    gp3.setMaximumNearestNeighbors(50);
+    gp3.setMaximumSurfaceAngle(M_PI/4);
+    gp3.setMinimumAngle(M_PI/18);
+    gp3.setMaximumAngle(2*M_PI/3);
+    gp3.setNormalConsistency(false);
+
+    gp3.setInputCloud (cloud_with_normals);
+    gp3.setSearchMethod (tree2);
+    gp3.reconstruct (triangles);
+
+    pcl::io::saveVTKFile("mesh218.vtk", triangles);
+
+    Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
+    parent->createChildSceneNode()->attachObject(lManualObject);
+
+}
