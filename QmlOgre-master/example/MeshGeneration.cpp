@@ -31,9 +31,13 @@
 #include <vtkLoopSubdivisionFilter.h>
 #include <vtkButterflySubdivisionFilter.h>
 
+#define LOW 0
+#define REGULAR 1
+#define HIGH 2
+
 
 /*Code inspired by PCL tutorials from http://pointclouds.org/documentation/tutorials/greedy_projection.php#greedy-triangulation*/
-void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene){
+void MeshGeneration::Point_clouds(Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene){
 
     Mesh* mesh = new Mesh(mask);
 
@@ -98,21 +102,7 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
     gp3.setSearchMethod (tree2);
     gp3.reconstruct (triangles);
 
-    pcl::io::saveVTKFile("mesh120.vtk", triangles);
-
-    //pcl::MeshSubdivisionVTK pclVtk;
-    //pclVtk.performProcessing(triangles);
-
-    //MeshGeneration::meshSmoothing(parent, name, triangles, cloud_with_normals, scene);
-    //pcl::io::saveVTKFile("mesh120smooth.vtk", triangles);
-
-    //pcl::PolygonMesh simplifiedOutput;
-    //pcl::surface::SimplificationRemoveUnusedVertices ps;
-    //ps.simplify(triangles, simplifiedOutput);
-    //gp3.reconstruct(simplifiedOutput);
-
-    //cout << "triangles size: " << triangles.cloud.width * triangles.cloud.height << endl;
-    //cout << "simplified size: " << simplifiedOutput.cloud.width * simplifiedOutput.cloud.height << endl;
+    pcl::io::saveVTKFile("mesh_regular.vtk", triangles);
 
     Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
     parent->createChildSceneNode()->attachObject(lManualObject);
@@ -121,10 +111,61 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d
 }
 
 
-void MeshGeneration::meshSmoothing(Ogre::SceneNode*parent,std::string name, pcl::PolygonMesh input_mesh_, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene){
+void MeshGeneration::meshSmoothing(Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene){
+
+    Mesh* mesh = new Mesh(mask);
+
+    pcl::PointCloud<pcl::PointXYZ> cloud_strt;
+    cloud_strt.width    = mesh->getWidth();
+    cloud_strt.height   = mesh->getHeight();
+    cloud_strt.is_dense = false;
+    cloud_strt.points.resize (cloud_strt.width * cloud_strt.height);
+
+    for (size_t i = 0; i < cloud_strt.points.size (); ++i)
+    {
+        cloud_strt.points[i].x = mesh->getVerticeValue(i*3);
+        cloud_strt.points[i].y = mesh->getVerticeValue(i*3+1);
+        cloud_strt.points[i].z = mesh->getVerticeValue(i*3+2);
+    }
+
+    pcl::io::savePCDFileASCII ("test_pcd.pcd", cloud_strt);
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PCLPointCloud2 cloud_blob;
+    pcl::io::loadPCDFile ("test_pcd.pcd", cloud_blob);
+    pcl::fromPCLPointCloud2 (cloud_blob, *cloud);
+
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals (new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud (cloud);
+    n.setInputCloud (cloud);
+    n.setSearchMethod (tree);
+    n.setKSearch (20);
+    n.compute (*normals);
+
+
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals (new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields (*cloud, *normals, *cloud_with_normals);
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2 (new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud (cloud_with_normals);
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
+
+    gp3.setSearchRadius(5);
+    gp3.setMu(3);
+    gp3.setMaximumNearestNeighbors(20);
+    gp3.setMaximumSurfaceAngle(M_PI/4);
+    gp3.setMinimumAngle(M_PI/18);
+    gp3.setMaximumAngle(2*M_PI/3);
+    gp3.setNormalConsistency(false);
+
+    gp3.setInputCloud (cloud_with_normals);
+    gp3.setSearchMethod (tree2);
+    gp3.reconstruct (triangles);
 
     vtkSmartPointer<vtkPolyData> vtk_polygons_;
-    pcl::VTKUtils::convertToVTK (input_mesh_, vtk_polygons_);
+    pcl::VTKUtils::convertToVTK (triangles, vtk_polygons_);
 
     // Apply the VTK algorithm
     vtkSmartPointer<vtkPolyDataAlgorithm> vtk_subdivision_filter;
@@ -136,9 +177,9 @@ void MeshGeneration::meshSmoothing(Ogre::SceneNode*parent,std::string name, pcl:
     vtk_polygons_ = vtk_subdivision_filter->GetOutput ();
 
     pcl::VTKUtils::convertToPCL (vtk_polygons_, output);
-    pcl::io::saveVTKFile("mesh120smooth.vtk", output);
+    pcl::io::saveVTKFile("mesh_smooth.vtk", output);
 
-    Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(output, inputCloud, scene);
+    Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(output, cloud_with_normals, scene);
     parent->createChildSceneNode()->attachObject(lManualObject);
 
 }
@@ -628,7 +669,7 @@ Mesh* MeshGeneration::MeshSimplification(Mask3d* mask){
 
 
 
-void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene){
+void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,Mask3d* mask, Ogre::SceneManager* scene){
 
     Mesh* mesh = MeshGeneration::MeshSimplification(mask);
     cout << mesh->getNbVertice() << endl;
@@ -684,9 +725,25 @@ void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,std::string 
     gp3.setSearchMethod (tree2);
     gp3.reconstruct (triangles);
 
-    pcl::io::saveVTKFile("mesh218.vtk", triangles);
+    pcl::io::saveVTKFile("mesh_simplified.vtk", triangles);
 
     Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
     parent->createChildSceneNode()->attachObject(lManualObject);
 
+}
+
+void MeshGeneration::MeshLOD(int lod, Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene){
+
+    switch(lod){
+
+    case LOW:
+        MeshGeneration::Point_clouds_Simplified(parent, mask, scene);
+        break;
+    case REGULAR:
+        MeshGeneration::Point_clouds(parent, mask, scene);
+        break;
+    case HIGH:
+        MeshGeneration::meshSmoothing(parent, mask, scene);
+        break;
+    }
 }

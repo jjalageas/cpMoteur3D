@@ -26,7 +26,7 @@ class MeshGeneration : public QQuickView
 {
 public:
 
-    static void Point_clouds(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene);
+    static void Point_clouds(Ogre::SceneNode*parent,Mask3d* mask, Ogre::SceneManager* scene);
     static void DrawMask_3DScene(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene);
     static void DrawMesh_3DScene(Ogre::SceneNode*parent,std::string name,Mesh* mesh, Ogre::SceneManager* scene);
     static void DrawTriangle(Point3D_t<float> p1,Point3D_t<float> p2,Point3D_t<float> p3,
@@ -42,9 +42,10 @@ public:
     static Ogre::ManualObject* CreateMesh(pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene);
     static Ogre::ManualObject* createManualObject(size_t vertexCount, size_t indicesCount, std::string materialName, Ogre::RenderOperation::OperationType operationType, Ogre::SceneManager* scene);
     static Ogre::ManualObject* CreatePointMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string materialName, Ogre::SceneManager* scene);
-    static void meshSmoothing(Ogre::SceneNode*parent,std::string name, pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene);
+    static void meshSmoothing(Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene);
     static Mesh* MeshSimplification(Mask3d* mask);
-    void Point_clouds_Simplified(Ogre::SceneNode*parent,std::string name,Mask3d* mask, Ogre::SceneManager* scene);
+    static void Point_clouds_Simplified(Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene);
+    static void MeshLOD(int lod, Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene);
 };
 
 #endif

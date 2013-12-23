@@ -115,8 +115,8 @@ void ExampleApp::initializeMesh(Examen* exam, std::string name)
     Volume* data = exam->getImage();
     DrawBoundingBox(NodeRoot,"boundingBox", data );
     Mask3d* mask=exam->getMask();
-    MeshGeneration::Point_clouds(NodeRoot, name, mask, m_sceneManager);
-    //MeshGeneration::meshSmoothing(Ogre::SceneNode*parent,std::string name, pcl::PolygonMesh inputMesh, pcl::PointCloud<pcl::PointNormal>::Ptr inputCloud, Ogre::SceneManager* scene)
+    MeshGeneration::MeshLOD(1, NodeRoot, mask, m_sceneManager);
+    //MeshGeneration::Point_clouds(NodeRoot, name, mask, m_sceneManager);
 }
 
 void ExampleApp::DrawLine(Ogre::SceneNode*parent,const Ogre::Vector3& start, const Ogre::Vector3& stop, const Ogre::ColourValue& col)
