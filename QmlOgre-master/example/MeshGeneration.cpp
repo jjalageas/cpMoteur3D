@@ -629,7 +629,7 @@ Ogre::ManualObject* MeshGeneration::CreateMesh(pcl::PolygonMesh inputMesh, pcl::
 
 }
 
-
+/*Point cloud display through manual object*/
 Ogre::ManualObject* MeshGeneration::CreatePointMesh(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::string materialName, Ogre::SceneManager* scene)
 {
     size_t vertexcount = cloud->points.size();
@@ -648,7 +648,7 @@ Ogre::ManualObject* MeshGeneration::CreatePointMesh(pcl::PointCloud<pcl::PointXY
     return ogreManual;
 }
 
-
+/*Point removal from point cloud*/
 Mesh* MeshGeneration::MeshSimplification(Mask3d* mask){
 
     Mesh* mesh = new Mesh(mask);
@@ -668,7 +668,7 @@ Mesh* MeshGeneration::MeshSimplification(Mask3d* mask){
 }
 
 
-
+/*Simplified meshing through point removal*/
 void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,Mask3d* mask, Ogre::SceneManager* scene){
 
     Mesh* mesh = MeshGeneration::MeshSimplification(mask);
@@ -732,6 +732,7 @@ void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,Mask3d* mask
 
 }
 
+/*Mesh switch for level of detail*/
 void MeshGeneration::MeshLOD(int lod, Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene){
 
     switch(lod){
@@ -746,4 +747,20 @@ void MeshGeneration::MeshLOD(int lod, Ogre::SceneNode*parent, Mask3d* mask, Ogre
         MeshGeneration::meshSmoothing(parent, mask, scene);
         break;
     }
+}
+
+/*Draws blue edges to be used along with draw triangle*/
+void MeshGeneration::DrawEdge(Point3D_t<float> p1, Poin3D_t<float> p2){
+
+    ManualObject* manual = mSceneMgr->createManualObject("manual");
+    manual->begin("BaseWhiteNoLighting", RenderOperation::OT_LINE_LIST);
+
+    manual->position(p1.x, p1.y, p1.z);
+    manual.Colour((Ogre::ColourValue(0.,1.,0.)));
+    manual->position(p2.x, p2.y, p2.z);
+    manual.Colour((Ogre::ColourValue(0.,1.,0.)));
+
+    manual->end();
+    mSceneMgr->getRootSceneNode()->attachObject(manual);
+
 }

@@ -46,6 +46,7 @@ public:
     static Mesh* MeshSimplification(Mask3d* mask);
     static void Point_clouds_Simplified(Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene);
     static void MeshLOD(int lod, Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene);
+    static void DrawEdge(Point3D_t<float> p1, Poin3D_t<float> p2);
 };
 
 #endif
