@@ -112,7 +112,7 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent, Mask3d* mask, Ogre::Sc
 
 
 void MeshGeneration::meshSmoothing(Ogre::SceneNode*parent, Mask3d* mask, Ogre::SceneManager* scene){
-
+    int start = clock();
     Mesh* mesh = new Mesh(mask);
 
     pcl::PointCloud<pcl::PointXYZ> cloud_strt;
@@ -672,7 +672,6 @@ Mesh* MeshGeneration::MeshSimplification(Mask3d* mask){
 void MeshGeneration::Point_clouds_Simplified(Ogre::SceneNode*parent,Mask3d* mask, Ogre::SceneManager* scene){
 
     Mesh* mesh = MeshGeneration::MeshSimplification(mask);
-    cout << mesh->getNbVertice() << endl;
 
     pcl::PointCloud<pcl::PointXYZ> cloud_strt;
 
@@ -750,17 +749,17 @@ void MeshGeneration::MeshLOD(int lod, Ogre::SceneNode*parent, Mask3d* mask, Ogre
 }
 
 /*Draws blue edges to be used along with draw triangle*/
-void MeshGeneration::DrawEdge(Point3D_t<float> p1, Poin3D_t<float> p2){
+void MeshGeneration::DrawEdge(Point3D_t<float> p1, Point3D_t<float> p2, Ogre::SceneManager* scene){
 
-    ManualObject* manual = mSceneMgr->createManualObject("manual");
-    manual->begin("BaseWhiteNoLighting", RenderOperation::OT_LINE_LIST);
+    Ogre::ManualObject* manual = scene->createManualObject("manual");
+    manual->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_LIST);
 
     manual->position(p1.x, p1.y, p1.z);
-    manual.Colour((Ogre::ColourValue(0.,1.,0.)));
+    manual->colour((Ogre::ColourValue(0.,1.,0.)));
     manual->position(p2.x, p2.y, p2.z);
-    manual.Colour((Ogre::ColourValue(0.,1.,0.)));
+    manual->colour((Ogre::ColourValue(0.,1.,0.)));
 
     manual->end();
-    mSceneMgr->getRootSceneNode()->attachObject(manual);
+    scene->getRootSceneNode()->attachObject(manual);
 
 }

@@ -164,6 +164,7 @@ public:
     void createTabColours(int nbelement){_colour=new float[nbelement*3];}
     void createTabVertices(int nbelement){_vertice=new float[nbelement*3];}
     void createTabEdges(int nbelement){_edges=new int[nbelement*6];}
+    void createTabVerticesAndNormals(int nbelement){_vertices_normals=new float[nbelement*6];}
 
     void setface(int s1,int s2,int s3,int index){_face[index]=s1;_face[index+1]=s2;_face[index+2]=s3;}
     void setnormal(int index,float val){_normals[index]=val;}
@@ -172,6 +173,14 @@ public:
     void setNbVertice(int val){_nbVertice = val;}
     void setNbFace(int val){_nbFace = val;}
     void setTabVertices(float* tabVertices){_vertice=tabVertices;}
+    void setVerticesAndNormals(int index, float pt_x, float pt_y, float pt_z, float nrml_x, float nrml_y, float nrml_z){
+        _vertice[index] = pt_x;
+        _vertice[index+1] = pt_y;
+        _vertice[index+2] = pt_z;
+        _vertice[index+3] = nrml_x;
+        _vertice[index+4] = nrml_y;
+        _vertice[index+5] = nrml_z;
+    }
 
     void populateEdges(unsigned short* _face){
         for(int i=0; i<_sizeFace; i+=6){
@@ -278,6 +287,7 @@ public:
     float* _vertice;
     int _nbVertice;
 
+    float* _vertices_normals;
 
     int _sizeFace;
     int _nbFace;
