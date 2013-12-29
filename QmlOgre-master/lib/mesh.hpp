@@ -143,6 +143,7 @@ public:
     float* getColorRef(){return _colour;}
     float getColorValue(int i){return _colour[i];}
     unsigned short getFaceIndex(int i){return _face[i];}
+    unsigned short* getFaceTab(){ return _face;}
 
     inline int getWidth(){return _width;}
     inline int getHeight()  { return _height; }
@@ -173,13 +174,14 @@ public:
     void setNbVertice(int val){_nbVertice = val;}
     void setNbFace(int val){_nbFace = val;}
     void setTabVertices(float* tabVertices){_vertice=tabVertices;}
+    void setVerticesAndNormals(int index, float ptOrNrml){_vertices_normals[index]=ptOrNrml;}
     void setVerticesAndNormals(int index, float pt_x, float pt_y, float pt_z, float nrml_x, float nrml_y, float nrml_z){
-        _vertice[index] = pt_x;
-        _vertice[index+1] = pt_y;
-        _vertice[index+2] = pt_z;
-        _vertice[index+3] = nrml_x;
-        _vertice[index+4] = nrml_y;
-        _vertice[index+5] = nrml_z;
+        _vertices_normals[index] = pt_x;
+        _vertices_normals[index+1] = pt_y;
+        _vertices_normals[index+2] = pt_z;
+        _vertices_normals[index+3] = nrml_x;
+        _vertices_normals[index+4] = nrml_y;
+        _vertices_normals[index+5] = nrml_z;
     }
 
     void populateEdges(unsigned short* _face){
