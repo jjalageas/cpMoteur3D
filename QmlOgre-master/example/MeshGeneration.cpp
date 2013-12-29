@@ -103,6 +103,9 @@ void MeshGeneration::Point_clouds(Ogre::SceneNode*parent, Mask3d* mask, Ogre::Sc
     gp3.reconstruct (triangles);
 
     pcl::io::saveVTKFile("mesh_regular.vtk", triangles);
+    mesh = computeMesh(mesh, triangles);
+    //DrawMesh_3DScene(parent, "name", mesh, scene);
+
 
     Ogre::ManualObject* lManualObject = MeshGeneration::CreateMesh(triangles, cloud_with_normals, scene);
     parent->createChildSceneNode()->attachObject(lManualObject);
@@ -190,6 +193,7 @@ Mesh* MeshGeneration::computeMesh(Mesh* mesh, pcl::PolygonMesh pcl_mesh){
     int nbPointsAfterPCL = pcl_mesh.cloud.width * pcl_mesh.cloud.height;
     int point_size = (pcl_mesh.cloud.data.size () / nbPointsAfterPCL);
     int tabOffset = 0;
+    int tabOffsetBis = 0;
 
     mesh->createTabVertices(nbPointsAfterPCL);
     mesh->createTabNormals(nbPointsAfterPCL);
@@ -208,11 +212,12 @@ Mesh* MeshGeneration::computeMesh(Mesh* mesh, pcl::PolygonMesh pcl_mesh){
                         pcl_mesh.cloud.fields[d].name == "z")){
                 float value;
                 memcpy (&value, &pcl_mesh.cloud.data[i * point_size + pcl_mesh.cloud.fields[d].offset + c * sizeof (float)], sizeof (float));
-                mesh->setvertice(d, value);
+                mesh->setvertice(d+tabOffsetBis, value);
                 mesh->setVerticesAndNormals(d+tabOffset, value);
             }
         }
         tabOffset+=6;
+        tabOffsetBis+=3;
     }
 
 
@@ -244,19 +249,25 @@ Mesh* MeshGeneration::computeMesh(Mesh* mesh, pcl::PolygonMesh pcl_mesh){
         normalTab[i] = pn1;
     }
 
+    mesh->createTabEdges(nbFaces);
+    mesh->setSizeFace(nbFaces*3);
     mesh->populateEdges(mesh->getFaceTab());
+    mesh->setNbEdge(nbFaces*3);
 
-    Point3D_t<float> *normalMoy[nbPointsAfterPCL];
+    Point3D_t<float>* normalMoy[nbPointsAfterPCL];
     Point3D_t<float>* init = new Point3D_t<float>(0,0,0);
-    for(int i = 0; i<nbPointsAfterPCL*3; i++)
+    for(int i = 0; i<nbPointsAfterPCL; i++){
+        cout << i << endl;
         normalMoy[i] = init;
+    }
 
     for(int i = 0; i<nbPointsAfterPCL*3; i+=3){
+        cout << "I: " << i << endl;
         std::vector< Point3D_t<float> > adj;
-        for(int j = 0; j < nbFaces; j++ ){
+        for(int j = 0; j < nbFaces*3; j++ ){
             if(mesh->getVerticeValue(i) == faceTab[j].x
                     && mesh->getVerticeValue(i+1) == faceTab[j].y
-                    && mesh->getVerticeValue(i+2) ==faceTab[j].z){
+                    && mesh->getVerticeValue(i+2) == faceTab[j].z && (mesh->getVerticeValue(i)!=0 && mesh->getVerticeValue(i+1) != 0 && mesh->getVerticeValue(i+1) != 0)){
                 adj.push_back(normalTab[j/3]);
             }
         }
@@ -265,7 +276,6 @@ Mesh* MeshGeneration::computeMesh(Mesh* mesh, pcl::PolygonMesh pcl_mesh){
         if(adj.size() >0){
             Point3D_t<float> pnorm = Point3D_t<float>(0,0,0);
             for(int k=0; k<adj.size(); k++){
-
                 pnorm.x += adj[k].x;
                 pnorm.y += adj[k].y;
                 pnorm.z += adj[k].z;
@@ -292,7 +302,6 @@ Mesh* MeshGeneration::computeMesh(Mesh* mesh, pcl::PolygonMesh pcl_mesh){
 
     int nrmlOffset = 3;
     for(int i=0; i< nbPointsAfterPCL*3; i+=3){
-
         mesh->setnormal(i,normalMoy[i/3]->x);
         mesh->setnormal(i+1,normalMoy[i/3]->y);
         mesh->setnormal(i+2,normalMoy[i/3]->z);
@@ -307,9 +316,6 @@ Mesh* MeshGeneration::computeMesh(Mesh* mesh, pcl::PolygonMesh pcl_mesh){
             mesh->setcolour(i, 1.0);
         else mesh->setcolour(i,0.0);
     }
-
-    free(normalMoy);
-
 
     return mesh;
 

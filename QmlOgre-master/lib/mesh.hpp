@@ -173,7 +173,9 @@ public:
     void setvertice(int index, float val){_vertice[index]=val;}
     void setNbVertice(int val){_nbVertice = val;}
     void setNbFace(int val){_nbFace = val;}
+    void setNbEdge(int val){_nbEdges = val;}
     void setTabVertices(float* tabVertices){_vertice=tabVertices;}
+    void setSizeFace(int val){_sizeFace = val;}
     void setVerticesAndNormals(int index, float ptOrNrml){_vertices_normals[index]=ptOrNrml;}
     void setVerticesAndNormals(int index, float pt_x, float pt_y, float pt_z, float nrml_x, float nrml_y, float nrml_z){
         _vertices_normals[index] = pt_x;
@@ -186,6 +188,7 @@ public:
 
     void populateEdges(unsigned short* _face){
         for(int i=0; i<_sizeFace; i+=6){
+            cout << "i: " << i << endl;
             _edges[i]=_face[i*6];
             _edges[i*6+1]=_face[i*6+1];
             _edges[i*6+2]=_face[i*6];
